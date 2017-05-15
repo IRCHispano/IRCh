@@ -1,7 +1,5 @@
 #! /bin/sh
 
-# $Id$
-
 echo "Extracting ircd/version.c ..."
 
 srcdir=$1
@@ -24,13 +22,15 @@ else \
 
 /bin/cat >version.c <<!SUB!THIS!
 /*
- * IRC - Internet Relay Chat, ircd/version.c
+ * IRC-Hispano IRC Daemon, ircd/version.c
+ *
+ * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
  * Copyright (C) 1990 Chelsea Ashley Dyerman
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -39,7 +39,8 @@ else \
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
 /*
@@ -60,6 +61,13 @@ const char *infotext[] = {
     "",
     "Based on the original code written by Jarkko Oikarinen, version 2.6:",
     "Wiz          Jarkko Oikarinen         <jto@tolsun.oulu.fi>",
+    "",
+    "The UnderNet code is based upon version 2.8.10.",
+    "The main developers of version 2.7 and 2.8 are:",
+    "",
+    "Avalon       Darren Reed              <avalon@coombs.anu.edu.au>",
+    "msa          Markku Savela            <msa@tel4.tel.vtt.fi>",
+    "Wumpus       Greg Lindahl             <lindahl@pbm.com>",
     "",
     "The main developer of version u2.9 and u2.10 was:",
     "Run          Carlo Wood               <carlo@runaway.xs4all.nl>",

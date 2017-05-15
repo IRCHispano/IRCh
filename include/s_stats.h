@@ -1,14 +1,13 @@
 /*
- * IRC - Internet Relay Chat, include/s_stats.h
- * Copyright (C) 2000 Joseph Bongaarts
+ * IRC-Hispano IRC Daemon, include/s_stats.h
  *
- * See file AUTHORS in IRC package for additional names of
- * the programmers.
+ * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 2000 Joseph Bongaarts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,15 +16,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 /** @file
  * @brief Report configuration lines and other statistics from this server.
- * @version $Id$
  */
-
 #ifndef INCLUDED_s_stats_h
 #define INCLUDED_s_stats_h
+
 #ifndef INCLUDED_features_h
 #include "ircd_features.h"
 #endif

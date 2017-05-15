@@ -1,14 +1,14 @@
 /*
- * IRC - Internet Relay Chat, ircd/hash.c
- * Copyright (C) 1998 Andrea Cocito, completely rewritten version.
- * Previous version was Copyright (C) 1991 Darren Reed, the concept
- * of linked lists for each hash bucket and the move-to-head 
- * optimization has been borrowed from there.
+ * IRC-Hispano IRC Daemon, ircd/hash.c
+ *
+ * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1998 Andrea Cocito
+ * Copyright (C) 1991 Darren Reed
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,7 +17,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+/** @file
+ * @brief Hash table management.
+ *
+ * This file used to use some very complicated hash function.  Now it
+ * uses CRC-32, but effectively remaps each input byte according to a
+ * table initialized at startup.
  */
 #include "config.h"
 
@@ -42,16 +50,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-
-
-/** @file
- * @brief Hash table management.
- * @version $Id$
- *
- * This file used to use some very complicated hash function.  Now it
- * uses CRC-32, but effectively remaps each input byte according to a
- * table initialized at startup.
- */
 
 /** Hash table for clients. */
 static struct Client *clientTable[HASHSIZE];

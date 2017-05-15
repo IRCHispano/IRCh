@@ -1,11 +1,13 @@
 /*
- * IRC - Internet Relay Chat, include/ircd_crypt.h
+ * IRC-Hispano IRC Daemon, include/ircd_crypt.h
+ *
+ * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
  * Copyright (C) 2002 hikari
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -14,11 +16,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /** @file
  * @brief Core password encryption and hashing APIs.
- * @version $Id$
  */
 #ifndef INCLUDED_ircd_crypt_h
 #define INCLUDED_ircd_crypt_h

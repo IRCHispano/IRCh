@@ -1,28 +1,27 @@
-/************************************************************************
- *   IRC - Internet Relay Chat, src/ircd_log.c
- *   Copyright (C) 1999 Thomas Helvey (BleepSoft)
- *   Copyright (C) 2000 Kevin L. Mitchell <klmitch@mit.edu>
+/*
+ * IRC-Hispano IRC Daemon, ircd/ircd_log.c
  *
- *   See file AUTHORS in IRC package for additional names of
- *   the programmers.
+ * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 2000 Kevin L. Mitchell <klmitch@mit.edu>
+ * Copyright (C) 1999 Thomas Helvey <tomh@inxpress.net>
  *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 1, or (at your option)
- *   any later version.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 /** @file
  * @brief IRC logging implementation.
- * @version $Id$
  */
 #include "config.h"
 

@@ -1,26 +1,32 @@
-/************************************************************************
- *   IRC - Internet Relay Chat, include/s_auth.h
+/*
+ * IRC-Hispano IRC Daemon, include/s_auth.h
  *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 1, or (at your option)
- *   any later version.
+ * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 2004 Michael Poole <mdpoole@troilus.org>
+ * Copyright (C) 2001 Perry Lorier <isomer@coders.net>
+ * Copyright (C) 1992 Darren Reed
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 /** @file
  * @brief Interface for DNS and ident lookups.
- * @version $Id$
  */
 #ifndef INCLUDED_s_auth_h
 #define INCLUDED_s_auth_h
+
 #ifndef INCLUDED_sys_types_h
 #include <sys/types.h>
 #define INCLUDED_sys_types_h

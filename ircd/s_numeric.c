@@ -1,13 +1,15 @@
 /*
- * IRC - Internet Relay Chat, ircd/s_numeric.c
- * Copyright (C) 1990 Jarkko Oikarinen
+ * IRC-Hispano IRC Daemon, ircd/s_numeric.c
  *
- * Numerous fixes by Markku Savela
+ * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1999 Andrea Cocito
+ * Copyright (C) 1993 Markku Savela
+ * Copyright (C) 1990 Jarkko Oikarinen
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,11 +18,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 /** @file
  * @brief Send a numeric message to a client.
- * @version $Id$
  */
 #include "config.h"
 

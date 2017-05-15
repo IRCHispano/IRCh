@@ -1,18 +1,14 @@
 /*
- * Userload module by Michael L. VanLoon (mlv) <michaelv@iastate.edu>
- * Written 2/93.  Originally grafted into irc2.7.2g 4/93.
+ * IRC-Hispano IRC Daemon, ircd/userload.c
  *
- * Rewritten 9/97 by Carlo Wood (Run) <carlo@runaway.xs4all.nl>
- * because previous version used ridiculous amounts of memory
- * (stored all loads of the passed three days ~ 8 megs).
- *
- * IRC - Internet Relay Chat, ircd/userload.c
- * Copyright (C) 1990 University of Oulu, Computing Center
+ * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997 Carlo Wood <carlo@runaway.xs4all.nl>
+ * Copyright (C) 1993 Michael L. VanLoon (mlv) <michaelv@iastate.edu>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 1, or (at your option)
- * any later version.
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,11 +17,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 /** @file
  * @brief Userload tracking and statistics.
- * @version $Id$
  */
 #include "config.h"
 
