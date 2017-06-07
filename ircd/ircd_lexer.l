@@ -107,6 +107,9 @@ static struct lexer_token {
   TOKEN(PROGRAM),
   TOKEN(DNS),
   TOKEN(WEBIRC),
+  TOKEN(STRIPSSLFP),
+  TOKEN(SSLFP),
+  TOKEN(SSLCIPHERS),
 #undef TOKEN
   { "administrator", ADMIN },
   { "apass_opmode", TPRIV_APASS_OPMODE },
@@ -148,6 +151,7 @@ static struct lexer_token {
   { "set", TPRIV_SET },
   { "show_all_invis", TPRIV_SHOW_ALL_INVIS },
   { "show_invis", TPRIV_SHOW_INVIS },
+  { "ssl", SSLTOK },
   { "tb", TBYTES },
   { "terabytes", TBYTES },
   { "unlimit_query", TPRIV_UNLIMIT_QUERY },

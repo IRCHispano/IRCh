@@ -155,6 +155,8 @@ void free_conf(struct ConfItem *aconf)
   if (aconf->passwd)
     memset(aconf->passwd, 0, strlen(aconf->passwd));
   MyFree(aconf->passwd);
+  MyFree(aconf->sslfp);
+  MyFree(aconf->sslciphers);
   MyFree(aconf->name);
   MyFree(aconf->hub_limit);
   MyFree(aconf);
@@ -1234,3 +1236,16 @@ int conf_check_server(struct Client *cptr)
   return 0;
 }
 
+int verify_sslclifp(struct Client* cptr, struct ConfItem* aconf)
+{
+  if (!(aconf->sslfp))
+    return 1;
+
+  if (!cli_sslclifp(cptr))
+    return 0;
+
+  if (ircd_strcmp(aconf->sslfp, cli_sslclifp(cptr)) != 0)
+    return 0;
+
+  return 1;
+}

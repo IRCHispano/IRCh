@@ -54,7 +54,7 @@ struct Message;
 #define CONF_UWORLD             0x8000     /**< ConfItem describes a Uworld server */
 
 #define CONF_AUTOCONNECT        0x0001     /**< Autoconnect to a server */
-
+#define CONF_SSL                0x0080     /**< Connect using SSL */
 #define CONF_UWORLD_OPER        0x0001     /**< UWorld server can remotely oper users */
 
 /** Indicates ConfItem types that count associated clients. */
@@ -82,6 +82,8 @@ struct ConfItem
   char *host;         /**< Peer hostname */
   char *origin_name;  /**< Text form of origin address */
   char *passwd;       /**< Password field */
+  char *sslfp;        /**< SSL certificate fingerprint */
+  char *sslciphers;   /**< SSL ciphers list */
   char *name;         /**< Name of peer */
   char *hub_limit;    /**< Mask that limits servers allowed behind
                          this one. */
@@ -224,6 +226,8 @@ extern void lookup_confhost(struct ConfItem *aconf);
 extern void conf_parse_userhost(struct ConfItem *aconf, char *host);
 extern struct ConfItem *conf_debug_iline(const char *client);
 extern void free_mapping(struct s_map *smap);
+
+extern int verify_sslclifp(struct Client* cptr, struct ConfItem* aconf);
 
 extern void yyerror(const char *msg);
 

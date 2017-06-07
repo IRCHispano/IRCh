@@ -157,6 +157,10 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
         continue;
       flags[len++] = 'H';
     }
+    if (FlagHas(&listener->flags, LISTEN_SSL))
+    {
+      flags[len++] = 'E';
+    }
     if (FlagHas(&listener->flags, LISTEN_IPV4))
     {
       flags[len++] = '4';
@@ -525,7 +529,14 @@ static void accept_connection(struct Event* ev)
       }
       ++ServerStats->is_ac;
       /* nextping = CurrentTime; */
+#if defined(USE_SSL)
+      if (listener_ssl(listener))
+        ssl_add_connection(listener, fd);
+      else
+        add_connection(listener, fd, NULL);
+#else
       add_connection(listener, fd);
+#endif /* USE_SSL */
     }
   }
 }

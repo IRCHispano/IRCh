@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#define PATCHLEVEL "16"
+#define PATCHLEVEL "0"
 
 #define RELEASE ".12."
 
@@ -28,7 +28,7 @@
 /* Do NOT edit those: */
 
 #ifndef BASE_VERSION
-#define BASE_VERSION "u2.10"
+#define BASE_VERSION "h2.10"
 #endif
 
 #ifndef MAJOR_PROTOCOL

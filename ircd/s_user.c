@@ -37,6 +37,7 @@
 #include "ircd_log.h"
 #include "ircd_reply.h"
 #include "ircd_snprintf.h"
+#include "ircd_ssl.h"
 #include "ircd_string.h"
 #include "list.h"
 #include "match.h"
@@ -70,6 +71,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+/** Sends response \a m of length \a l to client \a c. */
+#if defined(USE_SSL)
+#define sendheader(c, m, l) \
+   ssl_send(c, m, l)
+#else
+#define sendheader(c, m, l) \
+   send(cli_fd(c), m, l, 0)
+#endif /* USE_SSL */
 
 /** Count of allocated User structures. */
 static int userCount = 0;
@@ -380,6 +390,18 @@ int register_user(struct Client *cptr, struct Client *sptr)
     send_reply(sptr, RPL_MYINFO, cli_name(&me), version, infousermodes,
                infochanmodes, infochanmodeswithparams);
     send_supported(sptr);
+
+#if defined(USE_SSL)
+    if (IsSSL(sptr))
+    {
+      sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :You are connected to %s with %s", sptr,
+                    cli_name(&me), ssl_get_cipher(cli_socket(sptr).ssl));
+      if (!EmptyString(cli_sslclifp(sptr)))
+        sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Client certificate status: %s",
+                      sptr, ssl_get_verify_result(cli_socket(sptr).ssl));
+    }
+#endif
+
     m_lusers(sptr, sptr, 1, parv);
     update_load();
     motd_signon(sptr);
@@ -497,7 +519,8 @@ static const struct UserMode {
   { FLAG_CHSERV,      'k' },
   { FLAG_DEBUG,       'g' },
   { FLAG_ACCOUNT,     'r' },
-  { FLAG_HIDDENHOST,  'x' }
+  { FLAG_HIDDENHOST,  'x' },
+  { FLAG_SSL,          'z' }
 };
 
 /** Length of #userModeList. */
@@ -1074,6 +1097,12 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         if (what == MODE_ADD)
 	  do_host_hiding = 1;
 	break;
+      case 'z':
+        if (what == MODE_ADD)
+          SetSSL(sptr);
+        else
+          ClearSSL(sptr);
+        break;
       case 'r':
 	if (*(p + 1) && (what == MODE_ADD)) {
 	  account = *(++p);
@@ -1099,6 +1128,10 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
       ClearLocOp(sptr);
     if (!FlagHas(&setflags, FLAG_ACCOUNT) && IsAccount(sptr))
       ClrFlag(sptr, FLAG_ACCOUNT);
+    if (!FlagHas(&setflags, FLAG_SSL) && IsSSL(sptr))
+      ClearSSL(sptr);
+    if (FlagHas(&setflags, FLAG_SSL) && !IsSSL(sptr))
+      SetSSL(sptr);
     /*
      * new umode; servers can set it, local users cannot;
      * prevents users from /kick'ing or /mode -o'ing

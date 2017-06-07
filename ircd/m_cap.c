@@ -27,6 +27,7 @@
 #include "client.h"
 #include "ircd.h"
 #include "ircd_chattr.h"
+#include "ircd_features.h"
 #include "ircd_log.h"
 #include "ircd_reply.h"
 #include "ircd_snprintf.h"
@@ -48,10 +49,15 @@ static struct capabilities {
   unsigned long flags;
   char *name;
   int namelen;
+  int feat;
 } capab_list[] = {
-#define _CAP(cap, flags, name)						      \
-	{ CAP_ ## cap, #cap, (flags), (name), sizeof(name) - 1 }
-  CAPLIST
+#define _CAP(cap, flags, name, feat)						      \
+	{ CAP_ ## cap, #cap, (flags), (name), sizeof(name) - 1, feat }
+  _CAP(NONE, CAPFL_HIDDEN|CAPFL_PROHIBIT, "none", 0),
+#if defined(USE_SSL)
+  _CAP(TLS, 0, "tls", FEAT_CAP_tls),
+#endif
+/*  CAPLIST */
 #undef _CAP
 };
 

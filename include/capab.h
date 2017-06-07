@@ -39,8 +39,12 @@
 
 /** Client capabilities */
 enum Capab {
-#define _CAP(cap, flags, name)	CAP_ ## cap
-  CAPLIST,
+#define _CAP(cap, flags, name, feat)	CAP_ ## cap
+  _CAP(NONE, CAPFL_HIDDEN|CAPFL_PROHIBIT, "none", 0),
+#ifdef USE_SSL
+  _CAP(TLS, 0, "tls", 0),
+#endif
+ /* CAPLIST, */
 #undef _CAP
   _CAP_LAST_CAP
 };

@@ -109,6 +109,11 @@ const char* debug_serveropts(void)
 #else
   AddC('-');
 #endif
+#if defined(USE_SSL)
+  AddC('Z');
+#else
+  AddC('-');
+#endif /* USE_SSL */
 #ifdef  IPV6
   AddC('6');
 #else

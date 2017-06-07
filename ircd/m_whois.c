@@ -165,6 +165,13 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
      *       probably a good place to add them :)
      */
 
+    if (IsSSL(acptr)) {
+      send_reply(sptr, RPL_WHOISSSL, name);
+
+      if (cli_sslclifp(acptr) && !EmptyString(cli_sslclifp(acptr)))
+        send_reply(sptr, RPL_WHOISSSLFP, name, cli_sslclifp(acptr));
+    }
+
     if (MyConnect(acptr) && (!feature_bool(FEAT_HIS_WHOIS_IDLETIME) ||
                              (sptr == acptr || IsAnOper(sptr) || parc >= 3)))
        send_reply(sptr, RPL_WHOISIDLE, name, CurrentTime - user->last,

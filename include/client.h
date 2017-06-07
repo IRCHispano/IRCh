@@ -47,6 +47,11 @@
 #include <sys/types.h>          /* time_t, size_t */
 #define INCLUDED_sys_types_h
 #endif
+#if defined(USE_SSL)
+#ifndef INCLUDED_ircd_ssl_h
+#include "ircd_ssl.h"
+#endif
+#endif /* USE_SSL */
 
 struct ConfItem;
 struct Listener;
@@ -168,6 +173,13 @@ enum Flag
     FLAG_DEBUG,                     /**< send global debug/anti-hack info */
     FLAG_ACCOUNT,                   /**< account name has been set */
     FLAG_HIDDENHOST,                /**< user's host is hidden */
+    FLAG_SSL,                       /**< User is connected via SSL (+z) */
+
+#if defined(USE_SSL)
+    FLAG_STARTTLS,                  /**< User is connecting with StartTLS */
+    FLAG_SSLNEEDACCEPT,             /**< Client needs SSL_accept() to be called again */
+#endif
+
     FLAG_LAST_FLAG,                 /**< number of flags */
     FLAG_LOCAL_UMODES = FLAG_LOCOP, /**< First local mode flag */
     FLAG_GLOBAL_UMODES = FLAG_OPER  /**< First global mode flag */
@@ -225,6 +237,9 @@ struct Connection
   char con_buffer[BUFSIZE];          /**< Incoming message buffer; or
                                         the error that caused this
                                         clients socket to close. */
+#if defined(USE_SSL)
+  char*               con_sslerror;  /**< SSL Error. */
+#endif
   struct Socket       con_socket;    /**< socket descriptor for
                                       client */
   struct Timer        con_proc;      /**< process latent messages from
@@ -261,6 +276,7 @@ struct Client {
   char cli_name[HOSTLEN + 1];     /**< Unique name of the client, nick or host */
   char cli_username[USERLEN + 1]; /**< Username determined by ident lookup */
   char cli_info[REALLEN + 1];     /**< Free form additional client information */
+  char cli_sslclifp[BUFSIZE + 1];   /**< SSL client certificate fingerprint if available */
 };
 
 /** Magic constant to identify valid Client structures. */
@@ -322,6 +338,8 @@ struct Client {
 #define cli_info(cli)		((cli)->cli_info)
 /** Get client account string. */
 #define cli_account(cli)	(cli_user(cli) ? cli_user(cli)->account : "0")
+/** Get a clients SSL fingerprint string. */
+#define cli_sslclifp(cli)       ((cli)->cli_sslclifp)
 
 /** Get number of incoming bytes queued for client. */
 #define cli_count(cli)		con_count(cli_connect(cli))
@@ -331,6 +349,10 @@ struct Client {
 #define cli_freeflag(cli)	con_freeflag(cli_connect(cli))
 /** Get last error code for the client's connection. */
 #define cli_error(cli)		con_error(cli_connect(cli))
+#if defined(USE_SSL)
+/** Get last SSL error string. */
+#define cli_sslerror(cli)       con_sslerror(cli_connect(cli))
+#endif
 /** Get server notice mask for the client. */
 #define cli_snomask(cli)	con_snomask(cli_connect(cli))
 /** Get next time a nick change is allowed for the client. */
@@ -402,6 +424,10 @@ struct Client {
 #define con_freeflag(con)	((con)->con_freeflag)
 /** Get last error code on connection. */
 #define con_error(con)		((con)->con_error)
+#if defined(USE_SSL)
+/** Get last SSL error string. */
+#define con_sslerror(con)       ((con)->con_sslerror)
+#endif
 /** Get sentalong marker for connection. */
 #define con_sentalong(con)      ((con)->con_sentalong)
 /** Get server notice mask for connection. */
@@ -599,7 +625,14 @@ struct Client {
 #define IsPrivileged(x)         (IsAnOper(x) || IsServer(x))
 /** Return non-zero if the client's host is hidden. */
 #define HasHiddenHost(x)        (IsHiddenHost(x) && IsAccount(x))
-
+/** Return non-zero if the client is connected via SSL. */
+#define IsSSL(x)                HasFlag(x, FLAG_SSL)
+#if defined(USE_SSL)
+/** Return non-zero if the client is connecting using STARTTLS. */
+#define IsStartTLS(x)           HasFlag(x, FLAG_STARTTLS)
+/** Return non-zero if the client still needs SSL_accept(). */
+#define IsSSLNeedAccept(x)      HasFlag(x, FLAG_SSLNEEDACCEPT)
+#endif
 /** Mark a client as having an in-progress net.burst. */
 #define SetBurst(x)             SetFlag(x, FLAG_BURST)
 /** Mark a client as being between EOB and EOB ACK. */
@@ -638,6 +671,14 @@ struct Client {
 #define SetAccount(x)           SetFlag(x, FLAG_ACCOUNT)
 /** Mark a client as having mode +x (hidden host). */
 #define SetHiddenHost(x)        SetFlag(x, FLAG_HIDDENHOST)
+/** Mark a client as having connected via SSL. */
+#define SetSSL(x)               SetFlag(x, FLAG_SSL)
+#if defined(USE_SSL)
+/** Mark a client as using STARTTLS. */
+#define SetStartTLS(x)          SetFlag(x, FLAG_STARTTLS)
+/** Mark a client as needing SSL_accept(). */
+#define SetSSLNeedAccept(x)     SetFlag(x, FLAG_SSLNEEDACCEPT)
+#endif
 /** Mark a client as having a pending PING. */
 #define SetPingSent(x)          SetFlag(x, FLAG_PINGSENT)
 
@@ -671,6 +712,14 @@ struct Client {
 #define ClearServNotice(x)      ClrFlag(x, FLAG_SERVNOTICE)
 /** Remove mode +x (hidden host) from the client. */
 #define ClearHiddenHost(x)      ClrFlag(x, FLAG_HIDDENHOST)
+/** Client is no longer connected via SSL (this cannot be possible). */
+#define ClearSSL(x)             ClrFlag(x, FLAG_SSL)
+#if defined(USE_SSL)
+/** Client is no longer using STARTTLS. */
+#define ClearStartTLS(x)        ClrFlag(x, FLAG_STARTTLS)
+/** Client no longer needs SSL_accept(). */
+#define ClearSSLNeedAccept(x)   ClrFlag(x, FLAG_SSLNEEDACCEPT)
+#endif
 /** Clear the client's pending PING flag. */
 #define ClearPingSent(x)        ClrFlag(x, FLAG_PINGSENT)
 /** Clear the client's HUB flag. */

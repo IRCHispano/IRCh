@@ -37,6 +37,7 @@
 #include "ircd_log.h"
 #include "ircd_reply.h"
 #include "ircd_signal.h"
+#include "ircd_ssl.h"
 #include "ircd_string.h"
 #include "ircd_crypt.h"
 #include "jupe.h"
@@ -727,6 +728,13 @@ int main(int argc, char **argv) {
   }
 
   init_server_identity();
+
+#if defined(USE_SSL)
+  if (ssl_init()) {
+    Debug((DEBUG_FATAL, "Failed to initialize SSL contexts"));
+    exit(1);
+  }
+#endif
 
   uping_init();
 

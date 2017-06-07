@@ -374,6 +374,14 @@ struct Client;
 #define TOK_XREPLY		"XR"
 #define CMD_XREPLY		MSG_XREPLY, TOK_XREPLY
 
+#define MSG_STARTTLS            "STARTTLS"
+#define TOK_STARTTLS            "STARTTLS"
+#define CMD_STARTTLS            MSG_STARTTLS, TOK_STARTTLS
+
+#define MSG_FINGERPRINT         "FINGERPRINT"
+#define TOK_FINGERPRINT         "FP"
+#define CMD_FINGERPRINT         MSG_FINGERPRINT, TOK_FINGERPRINT
+
 /*
  * Constants
  */

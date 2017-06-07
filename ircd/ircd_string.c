@@ -661,3 +661,20 @@ ipmask_parse(const char *input, struct irc_in_addr *ip, unsigned char *pbits)
     return pos;
   } else return 0; /* parse failed */
 }
+
+char* itoa(int n) {
+  int i=0,j;
+  static char s[17];
+  static char u[17];
+
+  do{
+    s[i++]=(char)( n%10+48 );
+    n-=n%10;
+  }
+  while((n/=10)>0);
+  for (j=0;j<i;j++)
+  u[i-1-j]=s[j];
+
+  u[j]='\0';
+  return (char *)&u;
+}

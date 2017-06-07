@@ -42,6 +42,10 @@
 #include "supported.h"
 #include "version.h"
 
+#if defined(USE_SSL)
+#include "openssl/ssl.h"
+#endif
+
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 
 /*
@@ -59,6 +63,15 @@ int m_version(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     send_reply(sptr, RPL_VERSION, version, debugmode, cli_name(&me),
 	       debug_serveropts());
+
+#if defined(USE_SSL)
+    if (IsAnOper(sptr))
+#ifdef DEBUGMODE
+      sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Headers: %s", sptr, OPENSSL_VERSION_TEXT);
+#endif
+      sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Library: %s", sptr, SSLeay_version(SSLEAY_VERSION));
+#endif
+
     if (MyUser(sptr))
       send_supported(sptr);
   }

@@ -428,6 +428,23 @@ static struct FeatureDesc {
   F_S(URL_CLIENTS, 0, "ftp://ftp.undernet.org/pub/irc/clients", 0),
   F_S(URLREG, 0, "http://cservice.undernet.org/live/", 0),
 
+  /* SSL FEAT_'s */
+  F_S(SSL_CERTFILE, FEAT_CASE, "ircd.pem", 0),
+  F_S(SSL_KEYFILE, FEAT_CASE, "ircd.pem", 0),
+  F_S(SSL_CACERTFILE, FEAT_CASE | FEAT_NULL, 0, 0),
+  F_B(SSL_VERIFYCERT, 0, 0, 0),
+  F_B(SSL_NOSELFSIGNED, 0, 0, 0),
+  F_B(SSL_REQUIRECLIENTCERT, 0, 0, 0),
+  F_B(SSL_NOSSLV2, 0, 1, 0),
+  F_B(SSL_NOSSLV3, 0, 1, 0),
+  F_B(SSL_NOTLSV1, 0, 1, 0),
+  F_S(SSL_CIPHERS, FEAT_NULL, 0, 0),
+
+  /* CAP FEAT_'s */
+#if defined(USE_SSL)
+  F_B(CAP_tls, 0, 1, 0),
+#endif
+
 #undef F_S
 #undef F_B
 #undef F_I

@@ -1,8 +1,17 @@
+aclocal.m4
 makefile
 Makefile
+Makefile.in
+chattr.tab.c
+compile
+config.guess
 config.log
 config.h
+config.h.in
+configure
+depcomp
 stamp-h
+stamp-h.in
 config.status
 config.cache
 .deps/
@@ -10,3 +19,7 @@ config.cache
 ircu.tags
 autom4te.cache
 stamp-h1
+install-sh
+missing
+umkpasswd
+ylwrap

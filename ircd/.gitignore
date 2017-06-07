@@ -1,11 +1,14 @@
 *.o
 Makefile
+Makefile.in
 stamp-m
 version.c
 ircd
 ircd_lexer.c
 ircd_parser.c
 ircd_parser.h
+ircd_parser.tab.c
+ircd_parser.tab.h
 chkconf
 table_gen
 umkpasswd

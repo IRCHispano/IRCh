@@ -32,6 +32,11 @@
 #include <sys/types.h>	/* time_t */
 #define INCLUDED_sys_types_h
 #endif
+#if defined(USE_SSL)
+#ifndef INCLUDED_ssl_h
+#include "ircd_ssl.h"
+#endif
+#endif /* USE_SSL */
 
 struct Event;
 
@@ -106,6 +111,9 @@ struct Socket {
   enum SocketState s_state;	/**< state socket's in */
   unsigned int	   s_events;	/**< events socket is interested in */
   int		   s_fd;	/**< file descriptor for socket */
+#ifdef USE_SSL
+  SSL*             ssl;         /**< if not NULL, use SSL routines on socket */
+#endif /* USE_SSL */
 };
 
 #define SOCK_EVENT_READABLE	0x0001	/**< interested in readable */

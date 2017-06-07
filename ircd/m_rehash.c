@@ -28,6 +28,7 @@
 #include "ircd.h"
 #include "ircd_log.h"
 #include "ircd_reply.h"
+#include "ircd_ssl.h"
 #include "ircd_string.h"
 #include "motd.h"
 #include "numeric.h"
@@ -38,10 +39,11 @@
 
 /*
  * mo_rehash - oper message handler
- * 
+ *
  * parv[1] = 'm' flushes the MOTD cache and returns
  * parv[1] = 'l' reopens the log files and returns
  * parv[1] = 'q' to not rehash the resolver (optional)
+ * parv[1] = 's' to reload SSL certificates
  */
 int mo_rehash(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
@@ -59,6 +61,12 @@ int mo_rehash(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       send_reply(sptr, SND_EXPLICIT | RPL_REHASHING, ":Reopening log files");
       log_reopen(); /* reopen log files */
       return 0;
+#if defined(USE_SSL)
+    } else if (*parv[1] == 's') {
+      send_reply(sptr, SND_EXPLICIT | RPL_REHASHING, ":Reloading SSL certificates");
+      ssl_reinit(0);
+      return 0;
+#endif
     } else if (*parv[1] == 'q')
       flag = 2;
   }

@@ -206,6 +206,8 @@ void do_who(struct Client* sptr, struct Client* acptr, struct Channel* repchan,
     }
     if (HasHiddenHost(acptr))
       *(p1++) = 'x';
+    if (IsSSL(acptr))
+      *(p1++) = 'z';
   }
 
   if (!fields || (fields & WHO_FIELD_DIS))

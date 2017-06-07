@@ -116,12 +116,14 @@ struct Client;
 #define MODE_APASS	0x200000
 #define MODE_WASDELJOINS 0x400000 	/**< Not DELJOINS, but some joins
 					 * pending */
+#define MODE_SSLONLY     0x800000       /**< +Z Only SSL users (user mode +z) may join */
+
 /** mode flags which take another parameter (With PARAmeterS)
  */
 #define MODE_WPARAS     (MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT|MODE_APASS|MODE_UPASS)
 
 /** Available Channel modes */
-#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDdRcC" : "biklmnopstvrDdRcC"
+#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDdRcCz" : "biklmnopstvrDdRcCz"
 /** Available Channel modes that take parameters */
 #define infochanmodeswithparams feature_bool(FEAT_OPLEVELS) ? "AbkloUv" : "bklov"
 
