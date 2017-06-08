@@ -486,8 +486,18 @@ int ms_burst(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
 	  if (!(member = find_member_link(chptr, acptr)))
 	  {
 	    add_user_to_channel(chptr, acptr, current_mode, oplevel);
-            if (!(current_mode & CHFL_DELAYED))
-              sendcmdto_channel_butserv_butone(acptr, CMD_JOIN, chptr, NULL, 0, "%H", chptr);
+            if (!(current_mode & CHFL_DELAYED)) {
+              sendcmdto_channel_capab_butserv_butone(acptr, CMD_JOIN, chptr, NULL, 0,
+                                                     CAP_NONE, CAP_EXTJOIN, "%H", chptr);
+              sendcmdto_channel_capab_butserv_butone(acptr, CMD_JOIN, chptr, NULL, 0,
+                                                     CAP_EXTJOIN, CAP_NONE, "%H %s :%s",
+                                                     chptr, IsAccount(acptr) ? cli_account(acptr) : "*",
+                                                     cli_info(acptr));
+              if (cli_user(acptr)->away)
+                sendcmdto_channel_capab_butserv_butone(acptr, CMD_AWAY, chptr, NULL, 0,
+                                                       CAP_AWAYNOTIFY, CAP_NONE, ":%s",
+                                                       cli_user(acptr)->away);
+            }
 	  }
 	  else
 	  {

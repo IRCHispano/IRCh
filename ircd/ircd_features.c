@@ -441,6 +441,12 @@ static struct FeatureDesc {
   F_S(SSL_CIPHERS, FEAT_NULL, 0, 0),
 
   /* CAP FEAT_'s */
+  F_B(CAP_multi_prefix, 0, 1, 0),
+  F_B(CAP_userhost_in_names, 0, 1, 0),
+  F_B(CAP_extended_join, 0, 1, 0),
+  F_B(CAP_away_notify, 0, 1, 0),
+  F_B(CAP_account_notify, 0, 1, 0),
+  F_B(CAP_sasl, 0, 1, 0),
 #if defined(USE_SSL)
   F_B(CAP_tls, 0, 1, 0),
 #endif

@@ -939,9 +939,18 @@ hide_hostmask(struct Client *cptr, unsigned int flag)
     if (IsZombie(chan))
       continue;
     /* Send a JOIN unless the user's join has been delayed. */
-    if (!IsDelayedJoin(chan))
-      sendcmdto_channel_butserv_butone(cptr, CMD_JOIN, chan->channel, cptr, 0,
-                                         "%H", chan->channel);
+    if (!IsDelayedJoin(chan)) {
+      sendcmdto_channel_capab_butserv_butone(cptr, CMD_JOIN, chan->channel, cptr, 0,
+                                         CAP_NONE, CAP_EXTJOIN, "%H", chan->channel);
+      sendcmdto_channel_capab_butserv_butone(cptr, CMD_JOIN, chan->channel, cptr, 0,
+                                         CAP_EXTJOIN, CAP_NONE, "%H %s :%s", chan->channel,
+                                         IsAccount(cptr) ? cli_account(cptr) : "*",
+                                         cli_info(cptr));
+      if (cli_user(cptr)->away)
+        sendcmdto_channel_capab_butserv_butone(cptr, CMD_AWAY, chan->channel, NULL, 0,
+                                               CAP_AWAYNOTIFY, CAP_NONE, ":%s",
+                                               cli_user(cptr)->away);
+    }
     if (IsChanOp(chan) && HasVoice(chan))
       sendcmdto_channel_butserv_butone(&his, CMD_MODE, chan->channel, cptr, 0,
                                        "%H +ov %C %C", chan->channel, cptr,

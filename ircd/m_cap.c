@@ -54,6 +54,12 @@ static struct capabilities {
 #define _CAP(cap, flags, name, feat)						      \
 	{ CAP_ ## cap, #cap, (flags), (name), sizeof(name) - 1, feat }
   _CAP(NONE, CAPFL_HIDDEN|CAPFL_PROHIBIT, "none", 0),
+  _CAP(NAMESX, 0, "multi-prefix", FEAT_CAP_multi_prefix),
+  _CAP(UHNAMES, 0, "userhost-in-names", FEAT_CAP_userhost_in_names),
+  _CAP(EXTJOIN, 0, "extended-join", FEAT_CAP_extended_join),
+  _CAP(AWAYNOTIFY, 0, "away-notify", FEAT_CAP_away_notify),
+  _CAP(ACCNOTIFY, 0, "account-notify", FEAT_CAP_account_notify),
+//  _CAP(SASL, 0, "sasl", FEAT_CAP_sasl),
 #if defined(USE_SSL)
   _CAP(TLS, 0, "tls", FEAT_CAP_tls),
 #endif
@@ -126,6 +132,10 @@ find_cap(const char **caplist_p, int *neg_p)
 
   assert(caplist != *caplist_p || !*caplist); /* we *must* advance */
 
+  /* skip past any trailing whitespace... */
+  while (*caplist && IsSpace(*caplist))
+    caplist++;
+
   /* move ahead in capability list string--or zero pointer if we hit end */
   *caplist_p = *caplist ? caplist : 0;
 
@@ -149,7 +159,8 @@ send_caplist(struct Client *sptr, const struct CapSet *set,
   int i, loc, len, flags, pfx_len;
 
   /* set up the buffer for the final LS message... */
-  mb = msgq_make(sptr, "%:#C " MSG_CAP " %s :", &me, subcmd);
+  mb = msgq_make(sptr, "%:#C " MSG_CAP " %s %s :", &me,
+                 BadPtr(cli_name(sptr)) ? "*" : cli_name(sptr), subcmd);
 
   for (i = 0, loc = 0; i < CAPAB_LIST_LEN; i++) {
     flags = capab_list[i].flags;
@@ -160,7 +171,8 @@ send_caplist(struct Client *sptr, const struct CapSet *set,
      */
     if (!(rem && CapHas(rem, capab_list[i].cap))
         && !(set && CapHas(set, capab_list[i].cap))
-        && (rem || set || (flags & CAPFL_HIDDEN)))
+        && (rem || set || (flags & CAPFL_HIDDEN)
+            || (capab_list[i].feat && (!feature_bool(capab_list[i].feat)))))
       continue;
 
     /* Build the prefix (space separator and any modifiers needed). */
@@ -179,7 +191,8 @@ send_caplist(struct Client *sptr, const struct CapSet *set,
 
     len = capab_list[i].namelen + pfx_len; /* how much we'd add... */
     if (msgq_bufleft(mb) < loc + len + 2) { /* would add too much; must flush */
-      sendcmdto_one(&me, CMD_CAP, sptr, "%s * :%s", subcmd, capbuf);
+      sendcmdto_one(&me, CMD_CAP, sptr, "%s %s :%s",
+                    BadPtr(cli_name(sptr)) ? "*" : cli_name(sptr),  subcmd, capbuf);
       capbuf[(loc = 0)] = '\0'; /* re-terminate the buffer... */
     }
 
@@ -197,7 +210,7 @@ send_caplist(struct Client *sptr, const struct CapSet *set,
 static int
 cap_ls(struct Client *sptr, const char *caplist)
 {
-  if (IsUnknown(sptr)) /* registration hasn't completed; suspend it... */
+  if (IsUnknown(sptr) && cli_auth(sptr)) /* registration hasn't completed; suspend it... */
     auth_cap_start(cli_auth(sptr));
   return send_caplist(sptr, 0, 0, "LS"); /* send list of capabilities */
 }
@@ -212,7 +225,7 @@ cap_req(struct Client *sptr, const char *caplist)
   struct CapSet as = *cli_active(sptr); /* active set */
   int neg;
 
-  if (IsUnknown(sptr)) /* registration hasn't completed; suspend it... */
+  if (IsUnknown(sptr) && cli_auth(sptr)) /* registration hasn't completed; suspend it... */
     auth_cap_start(cli_auth(sptr));
 
   memset(&set, 0, sizeof(set));
@@ -221,7 +234,8 @@ cap_req(struct Client *sptr, const char *caplist)
     if (!(cap = find_cap(&cl, &neg)) /* look up capability... */
 	|| (!neg && (cap->flags & CAPFL_PROHIBIT)) /* is it prohibited? */
         || (neg && (cap->flags & CAPFL_STICKY))) { /* is it sticky? */
-      sendcmdto_one(&me, CMD_CAP, sptr, "NAK :%s", caplist);
+      sendcmdto_one(&me, CMD_CAP, sptr, "%s NAK :%s",
+                    BadPtr(cli_name(sptr)) ? "*" : cli_name(sptr), caplist);
       return 0; /* can't complete requested op... */
     }
 
@@ -306,7 +320,7 @@ cap_clear(struct Client *sptr, const char *caplist)
 static int
 cap_end(struct Client *sptr, const char *caplist)
 {
-  if (!IsUnknown(sptr)) /* registration has completed... */
+  if (!IsUnknown(sptr) || !cli_auth(sptr)) /* registration has completed... */
     return 0; /* so just ignore the message... */
 
   return auth_cap_done(cli_auth(sptr));
