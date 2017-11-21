@@ -106,8 +106,6 @@ struct Connection me_con;		/**< That's me too */
 struct Client *GlobalClientList  = &me; /**< Pointer to beginning of
 					   Client list */
 time_t         TSoffset          = 0;   /**< Offset of timestamps to system clock */
-int            GlobalRehashFlag  = 0;   /**< do a rehash if set */
-int            GlobalRestartFlag = 0;   /**< do a restart if set */
 time_t         CurrentTime;             /**< Updated every time we leave select() */
 
 char          *configfile        = CPATH; /**< Server configuration file */
@@ -571,7 +569,7 @@ static char check_file_access(const char *path, char which, int mode) {
 	  "Check on %cPATH (%s) failed: %s\n"
 	  "Please create this file and/or rerun `configure' "
 	  "using --with-%cpath and recompile to correct this.\n",
-	  which, path, strerror(errno), which);
+	  toupper(which), path, strerror(errno), which);
 
   return 0;
 }
@@ -657,7 +655,7 @@ int main(int argc, char **argv) {
 
   /* Check paths for accessibility */
   if (!check_file_access(SPATH, 'S', X_OK) ||
-      !check_file_access(configfile, 'C', R_OK))
+      !check_file_access(configfile, 'c', R_OK))
     return 4;
 
   if (!init_connection_limits())
