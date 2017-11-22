@@ -46,6 +46,7 @@ enum Capab {
   _CAP(EXTJOIN, 0, "extended-join", 0),
   _CAP(AWAYNOTIFY, 0, "away-notify", 0),
   _CAP(ACCNOTIFY, 0, "account-notify", 0),
+  _CAP(INVITENOTIFY, 0 , "invite-notify", 0),
  // _CAP(SASL, 0, "sasl", 0),
 #ifdef USE_SSL
   _CAP(TLS, 0, "tls", 0),

@@ -335,6 +335,7 @@ static struct FeatureDesc {
   F_I(AVBANLEN, 0, 40, 0),
   F_I(MAXBANS, 0, 100, 0),
   F_I(MAXSILES, 0, 25, 0),
+  F_I(MAXMONITOR, 0, 100, 0),
   F_I(HANGONGOODLINK, 0, 300, 0),
   F_I(HANGONRETRYDELAY, 0, 10, 0),
   F_I(CONNECTTIMEOUT, 0, 90, 0),
@@ -446,6 +447,7 @@ static struct FeatureDesc {
   F_B(CAP_extended_join, 0, 1, 0),
   F_B(CAP_away_notify, 0, 1, 0),
   F_B(CAP_account_notify, 0, 1, 0),
+  F_B(CAP_invite_notify, 0, 1, 0),
   F_B(CAP_sasl, 0, 1, 0),
 #if defined(USE_SSL)
   F_B(CAP_tls, 0, 1, 0),
