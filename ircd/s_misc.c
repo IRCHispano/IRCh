@@ -38,6 +38,7 @@
 #include "ircd_string.h"
 #include "list.h"
 #include "match.h"
+#include "monitor.h"
 #include "msg.h"
 #include "numeric.h"
 #include "numnicks.h"
@@ -216,6 +217,13 @@ static void exit_one_client(struct Client* bcptr, const char* comment)
       cli_user(bcptr)->silence = bp->next;
       free_ban(bp);
     }
+
+    /* Clean up monitor lists */
+    if (MyUser(bcptr))
+      monitor_list_clean(bcptr);
+
+    /* Notify Logout */
+    monitor_notify(bcptr, RPL_MONOFFLINE);
 
     /* Clean up snotice lists */
     if (MyUser(bcptr))

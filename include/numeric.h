@@ -506,6 +506,12 @@ extern const struct Numeric* get_error_numeric(int err);
 
 #define ERR_STARTTLS         691        /* Nefarious extension */
 
-#define ERR_LASTERROR        692
+#define RPL_MONONLINE        730        /* IRCv3.x extension */
+#define RPL_MONOFFLINE       731        /* IRCv3.x extension */
+#define RPL_MONLIST          732        /* IRCv3.x extension */
+#define RPL_ENDOFMONLIST     733        /* IRCv3.x extension */
+#define ERR_MONLISTFULL      734        /* IRCv3.x extension */
+
+#define ERR_LASTERROR        799
 
 #endif /* INCLUDED_numeric_h */
