@@ -70,6 +70,7 @@ enum Feature {
   FEAT_AVBANLEN,
   FEAT_MAXBANS,
   FEAT_MAXSILES,
+  FEAT_MAXMONITOR,
   FEAT_HANGONGOODLINK,
   FEAT_HANGONRETRYDELAY,
   FEAT_CONNECTTIMEOUT,
@@ -176,6 +177,13 @@ enum Feature {
   FEAT_SSL_CIPHERS,
 
   /* CAP FEAT_'s */
+  FEAT_CAP_multi_prefix,
+  FEAT_CAP_userhost_in_names,
+  FEAT_CAP_extended_join,
+  FEAT_CAP_away_notify,
+  FEAT_CAP_account_notify,
+  FEAT_CAP_invite_notify,
+  FEAT_CAP_sasl,
 #if defined(USE_SSL)
   FEAT_CAP_tls,
 #endif

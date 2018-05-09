@@ -34,6 +34,7 @@ struct Client;
 struct Connection;
 struct Channel;
 struct ConfItem;
+struct Monitor;
 
 /*
  * Structures
@@ -46,6 +47,7 @@ struct SLink {
     struct Client *cptr;    /**< List element as a client. */
     struct Channel *chptr;  /**< List element as a channel. */
     struct ConfItem *aconf; /**< List element as a configuration item. */
+    struct Monitor *mptr;   /**< List element as a monitor. */
     char *cp;               /**< List element as a string. */
   } value;                  /**< Value of list element. */
   unsigned int flags;       /**< Modifier flags for list element. */

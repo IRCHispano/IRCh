@@ -41,6 +41,7 @@
 #include "ircd_string.h"
 #include "list.h"
 #include "match.h"
+#include "monitor.h"
 #include "motd.h"
 #include "msg.h"
 #include "msgq.h"
@@ -502,6 +503,10 @@ int register_user(struct Client *cptr, struct Client *sptr)
     if ((cli_snomask(sptr) != SNO_DEFAULT) && HasFlag(sptr, FLAG_SERVNOTICE))
       send_reply(sptr, RPL_SNOMASK, cli_snomask(sptr), cli_snomask(sptr));
   }
+
+  /* Notify new local user */
+  monitor_notify(sptr, RPL_MONONLINE);
+
   return 0;
 }
 
@@ -584,6 +589,9 @@ int set_nick_name(struct Client* cptr, struct Client* sptr,
       set_user_mode(cptr, new_client, parc-7, parv+4, ALLOWMODES_ANY);
     }
 
+    /* Notify new remote user */
+    monitor_notify(sptr, RPL_MONONLINE);
+
     return register_user(cptr, new_client);
   }
   else if ((cli_name(sptr))[0]) {
@@ -642,6 +650,9 @@ int set_nick_name(struct Client* cptr, struct Client* sptr,
      * on that channel. Propagate notice to other servers.
      */
     if (IsUser(sptr)) {
+      /* Notify exit user */
+      monitor_notify(sptr, RPL_MONOFFLINE);
+
       sendcmdto_common_channels_butone(sptr, CMD_NICK, NULL, ":%s", nick);
       add_history(sptr, 1);
       sendcmdto_serv_butone(sptr, CMD_NICK, cptr, "%s %Tu", nick,
@@ -661,6 +672,10 @@ int set_nick_name(struct Client* cptr, struct Client* sptr,
     hAddClient(sptr);
     return auth_set_nick(cli_auth(sptr), nick);
   }
+
+  /* Notify change nick local/remote user */
+  monitor_notify(sptr, RPL_MONONLINE);
+
   return 0;
 }
 
@@ -939,9 +954,18 @@ hide_hostmask(struct Client *cptr, unsigned int flag)
     if (IsZombie(chan))
       continue;
     /* Send a JOIN unless the user's join has been delayed. */
-    if (!IsDelayedJoin(chan))
-      sendcmdto_channel_butserv_butone(cptr, CMD_JOIN, chan->channel, cptr, 0,
-                                         "%H", chan->channel);
+    if (!IsDelayedJoin(chan)) {
+      sendcmdto_channel_capab_butserv_butone(cptr, CMD_JOIN, chan->channel, cptr, 0,
+                                         CAP_NONE, CAP_EXTJOIN, "%H", chan->channel);
+      sendcmdto_channel_capab_butserv_butone(cptr, CMD_JOIN, chan->channel, cptr, 0,
+                                         CAP_EXTJOIN, CAP_NONE, "%H %s :%s", chan->channel,
+                                         IsAccount(cptr) ? cli_account(cptr) : "*",
+                                         cli_info(cptr));
+      if (cli_user(cptr)->away)
+        sendcmdto_channel_capab_butserv_butone(cptr, CMD_AWAY, chan->channel, NULL, 0,
+                                               CAP_AWAYNOTIFY, CAP_NONE, ":%s",
+                                               cli_user(cptr)->away);
+    }
     if (IsChanOp(chan) && HasVoice(chan))
       sendcmdto_channel_butserv_butone(&his, CMD_MODE, chan->channel, cptr, 0,
                                        "%H +ov %C %C", chan->channel, cptr,

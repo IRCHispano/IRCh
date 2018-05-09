@@ -83,6 +83,10 @@ int ms_account(struct Client* cptr, struct Client* sptr, int parc,
   ircd_strncpy(cli_user(acptr)->account, parv[2], ACCOUNTLEN);
   hide_hostmask(acptr, FLAG_ACCOUNT);
 
+  sendcmdto_common_channels_capab_butone(acptr, CMD_ACCOUNT, acptr, CAP_ACCNOTIFY, CAP_NONE,
+                                         "%s", cli_user(acptr)->account);
+
+
   sendcmdto_serv_butone(sptr, CMD_ACCOUNT, cptr,
                         cli_user(acptr)->acc_create ? "%C %s %Tu" : "%C %s",
                         acptr, cli_user(acptr)->account,

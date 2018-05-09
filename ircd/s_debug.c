@@ -39,6 +39,7 @@
 #include "jupe.h"
 #include "list.h"
 #include "listener.h"
+#include "monitor.h"
 #include "motd.h"
 #include "msgq.h"
 #include "numeric.h"
@@ -227,6 +228,7 @@ void count_memory(struct Client *cptr, const struct StatDesc *sd,
       chi = 0,                  /* channel invites */
       chb = 0,                  /* channel bans */
       wwu = 0,                  /* whowas users */
+      mt = 0,                   /* monitor entrys */
       cl = 0,                   /* classes */
       co = 0,                   /* conf lines */
       listeners = 0,            /* listeners */
@@ -247,6 +249,7 @@ void count_memory(struct Client *cptr, const struct StatDesc *sd,
       awm = 0,                  /* memory used by aways */
       wwam = 0,                 /* whowas away memory used */
       wwm = 0,                  /* whowas array memory used */
+      mtm = 0,                  /* memory used by monitor entrys */
       glm = 0,                  /* memory used by glines */
       jum = 0,                  /* memory used by jupes */
       com = 0,                  /* memory used by conf lines */
@@ -349,6 +352,10 @@ void count_memory(struct Client *cptr, const struct StatDesc *sd,
 
   totww = wwu * sizeof(struct User) + wwam + wwm;
 
+  monitor_count_memory(&mt, &mtm);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
+             ":Monitor %d(%zu)", mt, mtm);
+
   motd_memory_count(cptr);
 
   gl = gline_memory_count(&glm);
@@ -385,7 +392,7 @@ void count_memory(struct Client *cptr, const struct StatDesc *sd,
 
   tot =
       totww + totch + totcl + com + cl * sizeof(struct ConnectionClass) +
-      dbufs_allocated + msg_allocated + msgbuf_allocated + rm;
+      dbufs_allocated + msg_allocated + msgbuf_allocated + rm + mtm;
   tot += sizeof(void *) * HASHSIZE * 3;
 
 #if defined(MDEBUG)

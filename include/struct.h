@@ -71,11 +71,13 @@ struct User {
   struct Membership* channel;        /**< chain of channel pointer blocks */
   struct SLink*      invited;        /**< chain of invite pointer blocks */
   struct Ban*        silence;        /**< chain of silence pointer blocks */
+  struct SLink*      monitor;        /**< chain of monitor pointer blocks */
   char*              away;           /**< pointer to away message */
   time_t             last;           /**< last time user sent a message */
   unsigned int       refcnt;         /**< Number of times this block is referenced */
   unsigned int       joined;         /**< number of channels joined */
   unsigned int       invites;        /**< Number of channels we've been invited to */
+  unsigned int       monitors;       /**< Number of entries on monitor's list */
   /** Remote account name.  Before registration is complete, this is
    * either empty or contains the username from the USER command.
    * After registration, that may be prefixed with ~ or it may be

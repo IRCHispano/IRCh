@@ -514,6 +514,62 @@ void sendcmdto_common_channels_butone(struct Client *from, const char *cmd,
   msgq_clean(mb);
 }
 
+/** Send a (prefixed) command to all channels that \a from is on.
+ * @param[in] from Client originating the command.
+ * @param[in] cmd Long name of command.
+ * @param[in] tok Short name of command.
+ * @param[in] one Client direction to skip (or NULL).
+ * @param[in] pattern Format string for command arguments.
+ */
+void sendcmdto_common_channels_capab_butone(struct Client *from, const char *cmd,
+                                      const char *tok, struct Client *one,
+                                      int withcap, int skipcap,
+                                      const char *pattern, ...)
+{
+  struct VarData vd;
+  struct MsgBuf *mb;
+  struct Membership *chan;
+  struct Membership *member;
+
+  assert(0 != from);
+  assert(0 != cli_from(from));
+  assert(0 != pattern);
+  assert(!IsServer(from) && !IsMe(from));
+
+  vd.vd_format = pattern; /* set up the struct VarData for %v */
+
+  va_start(vd.vd_args, pattern);
+
+  /* build the buffer */
+  mb = msgq_make(0, "%:#C %s %v", from, cmd, &vd);
+  va_end(vd.vd_args);
+
+  bump_sentalong(from);
+  /*
+   * loop through from's channels, and the members on their channels
+   */
+  for (chan = cli_user(from)->channel; chan; chan = chan->next_channel) {
+    if (IsZombie(chan) || IsDelayedJoin(chan))
+      continue;
+    for (member = chan->channel->members; member;
+         member = member->next_member)
+      if (MyConnect(member->user)
+          && -1 < cli_fd(cli_from(member->user))
+          && member->user != one
+          && cli_sentalong(member->user) != sentalong_marker
+          && ((withcap == CAP_NONE) || CapActive(member->user, withcap))
+          && ((skipcap == CAP_NONE) || !CapActive(member->user, skipcap))) {
+        cli_sentalong(member->user) = sentalong_marker;
+        send_buffer(member->user, mb, 0);
+      }
+  }
+
+  if (MyConnect(from) && from != one)
+    send_buffer(from, mb, 0);
+
+  msgq_clean(mb);
+}
+
 /** Send a (prefixed) command to all local users on a channel.
  * @param[in] from Client originating the command.
  * @param[in] cmd Long name of command.
@@ -547,6 +603,52 @@ void sendcmdto_channel_butserv_butone(struct Client *from, const char *cmd,
         || (skip & SKIP_DEAF && IsDeaf(member->user))
         || (skip & SKIP_NONOPS && !IsChanOp(member))
         || (skip & SKIP_NONVOICES && !IsChanOp(member) && !HasVoice(member)))
+        continue;
+      send_buffer(member->user, mb, 0);
+  }
+
+  msgq_clean(mb);
+}
+
+/** Send a (prefixed) command to all local users on a channel with or without
+ *  a client capability specified.
+ * @param[in] from Client originating the command.
+ * @param[in] cmd Long name of command.
+ * @param[in] tok Short name of command (ignored).
+ * @param[in] to Destination channel.
+ * @param[in] one Client direction to skip (or NULL).
+ * @param[in] skip Bitmask of SKIP_DEAF, SKIP_NONOPS, SKIP_NONVOICES indicating which clients to skip.
+ * @param[in] withcap CAP_* that the user must have active to receive the message.
+ * @param[in] skipcap CAP_* that the user must not have active to receive the message.
+ * @param[in] pattern Format string for command arguments.
+ */
+void sendcmdto_channel_capab_butserv_butone(struct Client *from, const char *cmd,
+                                      const char *tok, struct Channel *to,
+                                      struct Client *one, unsigned int skip,
+                                      int withcap, int skipcap,
+                                      const char *pattern, ...)
+{
+  struct VarData vd;
+  struct MsgBuf *mb;
+  struct Membership *member;
+
+  vd.vd_format = pattern; /* set up the struct VarData for %v */
+  va_start(vd.vd_args, pattern);
+
+  /* build the buffer */
+  mb = msgq_make(0, "%:#C %s %v", from, cmd, &vd);
+  va_end(vd.vd_args);
+
+  /* send the buffer to each local channel member */
+  for (member = to->members; member; member = member->next_member) {
+    if (!MyConnect(member->user)
+        || member->user == one
+        || IsZombie(member)
+        || (skip & SKIP_DEAF && IsDeaf(member->user))
+        || (skip & SKIP_NONOPS && !IsChanOp(member))
+        || (skip & SKIP_NONVOICES && !IsChanOp(member) && !HasVoice(member))
+        || ((withcap != CAP_NONE) && !CapActive(member->user, withcap))
+        || ((skipcap != CAP_NONE) && CapActive(member->user, skipcap)))
         continue;
       send_buffer(member->user, mb, 0);
   }

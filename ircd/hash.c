@@ -39,6 +39,7 @@
 #include "ircd_string.h"
 #include "ircd.h"
 #include "match.h"
+#include "monitor.h"
 #include "msg.h"
 #include "numeric.h"
 #include "random.h"
@@ -55,6 +56,9 @@
 static struct Client *clientTable[HASHSIZE];
 /** Hash table for channels. */
 static struct Channel *channelTable[HASHSIZE];
+/** Hash table for monitors */
+static struct Monitor *monitorTable[HASHSIZE];
+
 /** CRC-32 update table. */
 static uint32_t crc32hash[256];
 
@@ -138,6 +142,20 @@ int hAddChannel(struct Channel *chptr)
   return 0;
 }
 
+/** Prepend a monitor's nick  to the appropriate hash bucket.
+ * @param[in] chptr Monitor to add to hash table.
+ * @return Zero.
+ */
+int hAddMonitor(struct Monitor *moptr)
+{
+  register HASHREGS hashv = strhash(mo_nick(moptr));
+
+  mo_next(moptr) = monitorTable[hashv];
+  monitorTable[hashv] = moptr;
+
+  return 0;
+}
+
 /** Remove a client from its hash bucket.
  * @param[in] cptr Client to remove from hash table.
  * @return Zero if the client is found and removed, -1 if not found.
@@ -208,6 +226,32 @@ int hRemChannel(struct Channel *chptr)
   return -1;
 }
 
+/** Remove a Monitor from its hash bucket.
+ * @param[in] chptr Monitor to remove from hash table.
+ * @return Zero if the monitor is found and removed, -1 if not found.
+ */
+int hRemMonitor(struct Monitor *moptr)
+{
+  HASHREGS hashv = strhash(mo_nick(moptr));
+  struct Monitor *tmp = monitorTable[hashv];
+
+  if (tmp == moptr) {
+    monitorTable[hashv] = mo_next(moptr);
+    mo_next(moptr) = moptr;
+    return 0;
+  }
+
+  while (tmp) {
+    if (mo_next(tmp) == moptr) {
+      mo_next(tmp) = mo_next(mo_next(tmp));
+      mo_next(moptr) = moptr;
+      return 0;
+    }
+    tmp = mo_next(tmp);
+  }
+  return -1;
+}
+
 /** Find a client by name, filtered by status mask.
  * If a client is found, it is moved to the top of its hash bucket.
  * @param[in] name Client name to search for.
@@ -259,6 +303,33 @@ struct Channel* hSeekChannel(const char *name)
     }
   }
   return chptr;
+
+}
+
+/** Find a monitor by nick.
+ * If a monitor's nick is found, it is moved to the top of its hash bucket.
+ * @param[in] name Monitor nick to search for.
+ * @return Matching monitor, or NULL if none.
+ */
+struct Monitor *hSeekMonitor(const char *nick)
+{
+  HASHREGS hashv = strhash(nick);
+  struct Monitor *moptr = monitorTable[hashv];
+
+  if (moptr) {
+    if (0 != ircd_strcmp(nick, mo_nick(moptr))) {
+      struct Monitor* prev;
+      while (prev = moptr, moptr = mo_next(moptr)) {
+        if (0 == ircd_strcmp(nick, mo_nick(moptr))) {
+          mo_next(prev) = mo_next(moptr);
+          mo_next(moptr) = monitorTable[hashv];
+          monitorTable[hashv] = moptr;
+          break;
+        }
+      }
+    }
+  }
+  return moptr;
 
 }
 

@@ -110,6 +110,7 @@ ircd_ircd_SOURCES = \
 	ircd/m_lusers.c \
 	ircd/m_map.c \
 	ircd/m_mode.c \
+	ircd/m_monitor.c \
 	ircd/m_motd.c \
 	ircd/m_names.c \
 	ircd/m_nick.c \
@@ -157,6 +158,7 @@ ircd_ircd_SOURCES = \
 	ircd/m_xreply.c \
 	ircd/match.c \
 	ircd/memdebug.c \
+	ircd/monitor.c \
 	ircd/motd.c \
 	ircd/msgq.c \
 	ircd/numnicks.c \
