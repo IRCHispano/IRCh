@@ -30,9 +30,9 @@
 #include "fileio.h"
 #include "ircd.h"
 #include "ircd_alloc.h"
+#include "ircd_parser.h"
 #include "ircd_string.h"
 #include "s_debug.h"
-#include "y.tab.h"
 
 extern int lineno;
 

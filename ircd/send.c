@@ -197,8 +197,12 @@ void send_queued(struct Client *to)
     else {
       if (IsDead(to)) {
         char tmp[512];
+#if defined(USE_SSL)
         sprintf(tmp,"Write error: %s", ((cli_sslerror(to)) ? (cli_sslerror(to)) :
                 ((strerror(cli_error(to))) ? (strerror(cli_error(to))) : "Unknown error")) );
+#else
+        sprintf(tmp,"Write error: %s", strerror(cli_error(to)) ? strerror(cli_error(to)) : "Unknown error");
+#endif
         dead_link(to, tmp);
       }
       return;
