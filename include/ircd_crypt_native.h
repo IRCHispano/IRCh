@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, include/ircd_crypt_native.h
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 2002 hikari
  * Copyright (C) 1990-1991 Armin Gruner
  *

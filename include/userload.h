@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, include/userload.h
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 1997 Carlo Wood
  * Copyright (C) 1993 Michael L. VanLoon (mlv) <michaelv@iastate.edu>
  * Copyright (C) 1990 Jarkko Oikarinen

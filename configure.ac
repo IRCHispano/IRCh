@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 dnl IRC-Hispano IRC Daemon, configure
 dnl
-dnl Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+dnl Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
 dnl Copyright (C) 2005  Kevin L. Mitchell <klmitch@mit.edu>
 dnl Copyright (C) 2001  Kevin L. Mitchell <klmitch@mit.edu>
 dnl Copyright (c) 1997, by Carlo Wood <carlo@runaway.xs4all.nl>
@@ -30,7 +30,7 @@ AC_PREREQ([2.69])
 AC_COPYRIGHT(
 [IRC-Hispano IRC Daemon, configure
 
-Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

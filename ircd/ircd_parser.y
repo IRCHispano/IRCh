@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, ircd/ircd_parser.y
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 2001 by Andrew Miller, Diana Bruce and ircd-hybrid team
  *
  * This program is free software; you can redistribute it and/or modify

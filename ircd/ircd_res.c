@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, ircd/ircd_res.c
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 2003 cryogen and Dianora
  * Copyright (C) 1999 Thomas Helvey
  * Copyright (C) 1992 Darren Reed

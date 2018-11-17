@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, ircd/m_asll.c
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 2002 Alex Badea <vampire@p16.pub.ro>
  *
  * This program is free software; you can redistribute it and/or modify

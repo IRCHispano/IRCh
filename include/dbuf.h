@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, include/dbuf.h
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 1990 Markku Savela
  *
  * This program is free software; you can redistribute it and/or modify

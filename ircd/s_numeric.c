@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, ircd/s_numeric.c
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 1999 Andrea Cocito
  * Copyright (C) 1993 Markku Savela
  * Copyright (C) 1990 Jarkko Oikarinen

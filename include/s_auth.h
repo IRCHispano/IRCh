@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, include/s_auth.h
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 2004 Michael Poole <mdpoole@troilus.org>
  * Copyright (C) 2001 Perry Lorier <isomer@coders.net>
  * Copyright (C) 1992 Darren Reed

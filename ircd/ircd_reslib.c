@@ -1,7 +1,7 @@
 /*
  * IRC-Hispano IRC Daemon, ircd/ircd_reslib.c
  *
- * Copyright (C) 1997-2017 IRC-Hispano Development Team <devel@irc-hispano.es>
+ * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
  * Copyright (C) 1996-1999 by Internet Software Consortium
  * Copyright (C) 1993 by Digital Equipment Corporation
  * Copyright (C) 1985-1993 The Regents of the University of California
