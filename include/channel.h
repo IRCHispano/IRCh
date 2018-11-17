@@ -101,7 +101,7 @@ struct Client;
 #define MODE_KEY        0x0100		/**< +k Keyed */
 #define MODE_BAN        0x0200		/**< +b Ban */
 #define MODE_LIMIT      0x0400		/**< +l Limit */
-#define MODE_REGONLY    0x0800  	/**< Only +r users may join */
+#define MODE_REGONLY    0x0800  	/**< +R Only +r users may join */
 #define MODE_DELJOINS   0x1000  	/**< New join messages are delayed */
 #define MODE_REGISTERED 0x2000  	/**< Channel marked as registered
 					 * (for future semantic expansion) */

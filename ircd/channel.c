@@ -828,13 +828,13 @@ void channel_modes(struct Client *cptr, char *mbuf, char *pbuf, int buflen,
     *mbuf++ = 'i';
   if (chptr->mode.mode & MODE_NOPRIVMSGS)
     *mbuf++ = 'n';
-  if (chptr->mode.mode & MODE_REGONLY)
+  if (chptr->mode.mode & MODE_REGISTERED)
     *mbuf++ = 'r';
   if (chptr->mode.mode & MODE_DELJOINS)
     *mbuf++ = 'D';
   else if (MyUser(cptr) && (chptr->mode.mode & MODE_WASDELJOINS))
     *mbuf++ = 'd';
-  if (chptr->mode.mode & MODE_REGISTERED)
+  if (chptr->mode.mode & MODE_REGONLY)
     *mbuf++ = 'R';
   if (chptr->mode.mode & MODE_NOCOLOR)
     *mbuf++ = 'c';
@@ -1532,9 +1532,9 @@ modebuf_flush_int(struct ModeBuf *mbuf, int all)
     MODE_TOPICLIMIT,	't',
     MODE_INVITEONLY,	'i',
     MODE_NOPRIVMSGS,	'n',
-    MODE_REGONLY,	'r',
+    MODE_REGISTERED,	'r',
     MODE_DELJOINS,      'D',
-    MODE_REGISTERED,	'R',
+    MODE_REGONLY,	'R',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
 /*  MODE_KEY,		'k', */
@@ -2096,10 +2096,10 @@ modebuf_extract(struct ModeBuf *mbuf, char *buf)
     MODE_KEY,		'k',
     MODE_APASS,		'A',
     MODE_UPASS,		'U',
-    MODE_REGISTERED,	'R',
+    MODE_REGISTERED,	'r',
 /*  MODE_BAN,		'b', */
     MODE_LIMIT,		'l',
-    MODE_REGONLY,	'r',
+    MODE_REGONLY,	'R',
     MODE_DELJOINS,      'D',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
@@ -3239,10 +3239,10 @@ mode_parse(struct ModeBuf *mbuf, struct Client *cptr, struct Client *sptr,
     MODE_KEY,		'k',
     MODE_APASS,		'A',
     MODE_UPASS,		'U',
-    MODE_REGISTERED,	'R',
+    MODE_REGISTERED,	'r',
     MODE_BAN,		'b',
     MODE_LIMIT,		'l',
-    MODE_REGONLY,	'r',
+    MODE_REGONLY,	'R',
     MODE_DELJOINS,      'D',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
