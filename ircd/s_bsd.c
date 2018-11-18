@@ -728,11 +728,13 @@ static int read_packet(struct Client *cptr, int socket_ready)
     if (length > 0 && dbuf_put(&(cli_recvQ(cptr)), readbuf, length) == 0)
       return exit_client(cptr, cptr, &me, "dbuf_put fail");
 
-    if (DBufLength(&(cli_recvQ(cptr))) > feature_int(FEAT_CLIENT_FLOOD))
+    if ((DBufLength(&(cli_recvQ(cptr))) > feature_int(FEAT_CLIENT_FLOOD))
+         && !IsChannelService(cptr) && !IsUserBot(cptr))
       return exit_client(cptr, cptr, &me, "Excess Flood");
 
-    while (DBufLength(&(cli_recvQ(cptr))) && !NoNewLine(cptr) && 
-           (IsTrusted(cptr) || cli_since(cptr) - CurrentTime < 10))
+    while (DBufLength(&(cli_recvQ(cptr))) && !NoNewLine(cptr) &&
+           (IsTrusted(cptr) || IsChannelService(cptr) || IsUserBot(cptr) ||
+            cli_since(cptr) - CurrentTime < 10))
     {
       dolen = dbuf_getmsg(&(cli_recvQ(cptr)), cli_buffer(cptr), BUFSIZE);
       /*

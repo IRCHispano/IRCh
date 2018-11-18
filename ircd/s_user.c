@@ -524,6 +524,8 @@ static const struct UserMode {
   { FLAG_CHSERV,      'k' },
   { FLAG_DEBUG,       'g' },
   { FLAG_ACCOUNT,     'r' },
+  { FLAG_SERVICESBOT, 'B' },
+  { FLAG_USERBOT,     'b' },
   { FLAG_HIDDENHOST,  'x' },
   { FLAG_SSL,          'z' }
 };
@@ -737,6 +739,9 @@ int check_target_limit(struct Client *sptr, void *target, const char *name,
   assert(0 != sptr);
   assert(cli_local(sptr));
   targets = cli_targets(sptr);
+
+  if (IsChannelService(sptr) || IsUserBot(sptr))
+    return 0;
 
   /*
    * Same target as last time?
@@ -1111,6 +1116,18 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         else
           ClearDebug(sptr);
         break;
+      case 'B':
+        if (what == MODE_ADD)
+          SetServicesBot(sptr);
+        else
+          ClearServicesBot(sptr);
+        break;
+      case 'b':
+        if (what == MODE_ADD)
+          SetUserBot(sptr);
+        else
+          ClearUserBot(sptr);
+        break;
       case 'x':
         if (what == MODE_ADD)
 	  do_host_hiding = 1;
@@ -1146,6 +1163,10 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
       ClearLocOp(sptr);
     if (!FlagHas(&setflags, FLAG_ACCOUNT) && IsAccount(sptr))
       ClrFlag(sptr, FLAG_ACCOUNT);
+    if (!FlagHas(&setflags, FLAG_SERVICESBOT))
+      ClearServicesBot(sptr);
+    if (!FlagHas(&setflags, FLAG_USERBOT))
+      ClearUserBot(sptr);
     if (!FlagHas(&setflags, FLAG_SSL) && IsSSL(sptr))
       ClearSSL(sptr);
     if (FlagHas(&setflags, FLAG_SSL) && !IsSSL(sptr))

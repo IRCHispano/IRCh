@@ -143,7 +143,7 @@ int m_join(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     }
 
     if (cli_user(sptr)->joined >= feature_int(FEAT_MAXCHANNELSPERUSER)
-	&& !HasPriv(sptr, PRIV_CHAN_LIMIT)) {
+	&& !HasPriv(sptr, PRIV_CHAN_LIMIT) && !IsUserBot(sptr)) {
       send_reply(sptr, ERR_TOOMANYCHANNELS, name);
       break; /* no point processing the other channels */
     }

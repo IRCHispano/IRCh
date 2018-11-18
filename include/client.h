@@ -162,18 +162,20 @@ enum Flag
     FLAG_BURST,                     /**< Server is receiving a net.burst */
     FLAG_BURST_ACK,                 /**< Server is waiting for eob ack */
     FLAG_IPCHECK,                   /**< Added or updated IPregistry data */
-    FLAG_LOCOP,                     /**< Local operator -- SRB */
-    FLAG_SERVNOTICE,                /**< server notices such as kill */
-    FLAG_OPER,                      /**< Operator */
-    FLAG_INVISIBLE,                 /**< makes user invisible */
-    FLAG_WALLOP,                    /**< send wallops to them */
-    FLAG_DEAF,                      /**< Makes user deaf */
-    FLAG_CHSERV,                    /**< Disallow KICK or MODE -o on the user;
+    FLAG_LOCOP,                     /**< +O Local operator -- SRB */
+    FLAG_SERVNOTICE,                /**< +s server notices such as kill */
+    FLAG_OPER,                      /**< +o Operator */
+    FLAG_INVISIBLE,                 /**< +i makes user invisible */
+    FLAG_WALLOP,                    /**< +w send wallops to them */
+    FLAG_DEAF,                      /**< +d Makes user deaf */
+    FLAG_CHSERV,                    /**< +k Disallow KICK or MODE -o on the user;
                                        don't display channels in /whois */
-    FLAG_DEBUG,                     /**< send global debug/anti-hack info */
-    FLAG_ACCOUNT,                   /**< account name has been set */
-    FLAG_HIDDENHOST,                /**< user's host is hidden */
-    FLAG_SSL,                       /**< User is connected via SSL (+z) */
+    FLAG_DEBUG,                     /**< +g send global debug/anti-hack info */
+    FLAG_ACCOUNT,                   /**< +r account name has been set */
+    FLAG_SERVICESBOT,               /**< +B nick is services Bot */
+    FLAG_USERBOT,                   /**< +b nick is user Bot (Docking) */
+    FLAG_HIDDENHOST,                /**< +x user's host is hidden */
+    FLAG_SSL,                       /**< +z User is connected via SSL */
 
 #if defined(USE_SSL)
     FLAG_STARTTLS,                  /**< User is connecting with StartTLS */
@@ -616,6 +618,10 @@ struct Client {
 #define IsService(x)            HasFlag(x, FLAG_SERVICE)
 /** Return non-zero if the client has an account stamp. */
 #define IsAccount(x)            HasFlag(x, FLAG_ACCOUNT)
+/** Return non-zero if the client has set mode +B (Services Bot). */
+#define IsServicesBot(x)        HasFlag(x, FLAG_SERVICESBOT)
+/** Return non-zero if the client has set mode +b (User Bot). */
+#define IsUserBot(x)            HasFlag(x, FLAG_USERBOT)
 /** Return non-zero if the client has set mode +x (hidden host). */
 #define IsHiddenHost(x)         HasFlag(x, FLAG_HIDDENHOST)
 /** Return non-zero if the client has an active PING request. */
@@ -669,6 +675,10 @@ struct Client {
 #define SetService(x)           SetFlag(x, FLAG_SERVICE)
 /** Mark a client as having an account stamp. */
 #define SetAccount(x)           SetFlag(x, FLAG_ACCOUNT)
+/** Mark a client as having mode +B (Services Bot). */
+#define SetServicesBot(x)       SetFlag(x, FLAG_SERVICESBOT)
+/** Mark a client as having mode +b (User Bot). */
+#define SetUserBot(x)           SetFlag(x, FLAG_USERBOT)
 /** Mark a client as having mode +x (hidden host). */
 #define SetHiddenHost(x)        SetFlag(x, FLAG_HIDDENHOST)
 /** Mark a client as having connected via SSL. */
@@ -710,6 +720,10 @@ struct Client {
 #define ClearWallops(x)         ClrFlag(x, FLAG_WALLOP)
 /** Remove mode +s (server notices) from the client. */
 #define ClearServNotice(x)      ClrFlag(x, FLAG_SERVNOTICE)
+/** Remove mode +B (Services Bot) from the client. */
+#define ClearServicesBot(x)     ClrFlag(x, FLAG_SERVICESBOT)
+/** Remove mode +b (User Bot) from the client. */
+#define ClearUserBot(x)         ClrFlag(x, FLAG_USERBOT)
 /** Remove mode +x (hidden host) from the client. */
 #define ClearHiddenHost(x)      ClrFlag(x, FLAG_HIDDENHOST)
 /** Client is no longer connected via SSL (this cannot be possible). */

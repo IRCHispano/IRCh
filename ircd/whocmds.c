@@ -204,6 +204,10 @@ void do_who(struct Client* sptr, struct Client* acptr, struct Channel* repchan,
       if (SendDebug(acptr))
         *(p1++) = 'g';
     }
+    if (IsServicesBot(acptr))
+      *(p1++) = 'B';
+    if (IsUserBot(acptr))
+      *(p1++) = 'b';
     if (HasHiddenHost(acptr))
       *(p1++) = 'x';
     if (IsSSL(acptr))

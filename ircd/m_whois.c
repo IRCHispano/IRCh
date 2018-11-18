@@ -151,8 +151,16 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
     if (user->away)
        send_reply(sptr, RPL_AWAY, name, user->away);
 
+
+
     if (SeeOper(sptr,acptr))
        send_reply(sptr, RPL_WHOISOPERATOR, name);
+
+    if (IsServicesBot(acptr))
+       send_reply(sptr, RPL_WHOISBOT, name, feature_str(FEAT_NETWORK));
+
+    if (IsUserBot(acptr))
+       send_reply(sptr, RPL_WHOISUSERBOT, name);
 
     if (IsAccount(acptr))
       send_reply(sptr, RPL_WHOISACCOUNT, name, user->account);

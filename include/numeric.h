@@ -257,12 +257,14 @@ extern const struct Numeric* get_error_numeric(int err);
 #define RPL_LISTUSAGE        334        /* Undernet extension */
 /*	RPL_COMMANDSYNTAX    334	   Dalnet */
 /*	RPL_LISTSYNTAX	     334	   unreal */
+#define RPL_WHOISBOT         335        /* Unreal */
 /*      RPL_CHANPASSOK       338           IRCnet extension (?)*/
 #define	RPL_WHOISACTUALLY    338	/* Undernet extension, dalnet */
 /*	RPL_BADCHANPASS	     339           IRCnet extension (?) */
 #define RPL_USERIP           340        /* Undernet extension */
 #define RPL_INVITING         341
 /*      RPL_SUMMONING        342           removed from RFC1459 */
+#define RPL_WHOISUSERBOT     343        /* IRC-Hispano extension */
 
 #define RPL_ISSUEDINVITE     345        /* Undernet extension */
 #define RPL_INVITELIST       346        /* IRCnet, Undernet extension */

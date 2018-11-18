@@ -704,7 +704,7 @@ static Numeric replyTable[] = {
 /* 334 */
   { RPL_LISTUSAGE, ":%s", "334" },
 /* 335 */
-  { 0 },
+  { RPL_WHOISBOT, "%s :is a \2Bot\2 on %s", "335" },
 /* 336 */
   { 0 },
 /* 337 */
@@ -720,7 +720,7 @@ static Numeric replyTable[] = {
 /* 342 */
   { 0 },
 /* 343 */
-  { 0 },
+  { RPL_WHOISUSERBOT, "%s :is a Docking Bot", "343"},
 /* 344 */
   { 0 },
 /* 345 */

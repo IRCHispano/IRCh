@@ -155,7 +155,7 @@ void relay_channel_notice(struct Client* sptr, const char* name, const char* tex
       check_target_limit(sptr, chptr, chptr->chname, 0))
     return;
 
-  if ((chptr->mode.mode & MODE_NONOTICE)) {
+  if ((chptr->mode.mode & MODE_NONOTICE) && !IsChannelService(sptr)) {
     send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
     return;
   }
