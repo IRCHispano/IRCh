@@ -71,6 +71,7 @@ do_clearmode(struct Client *cptr, struct Client *sptr, struct Channel *chptr,
     MODE_NOCTCP,        'C',
     MODE_MODERATENOREG,	'M',
     MODE_NONOTICE,	'N',
+    MODE_NOQUITPARTS,	'u',
     MODE_SSLONLY,	'z',
     0x0, 0x0
   };

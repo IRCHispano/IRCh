@@ -121,13 +121,14 @@ struct Client;
 #define MODE_OPERONLY	0x1000000	/**< +O Only +o users may join */
 #define MODE_MODERATENOREG 0x2000000	/**< +M Moderate unauthed users */
 #define MODE_NONOTICE	0x4000000	/**< +N No channel notices */
+#define MODE_NOQUITPARTS 0x8000000	/**< +u No message quit/part */
 
 /** mode flags which take another parameter (With PARAmeterS)
  */
 #define MODE_WPARAS     (MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT|MODE_APASS|MODE_UPASS)
 
 /** Available Channel modes */
-#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDdROcCMNz" : "biklmnopstvrDdROcCMNz"
+#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDdROcCMNuz" : "biklmnopstvrDdROcCMNuz"
 /** Available Channel modes that take parameters */
 #define infochanmodeswithparams feature_bool(FEAT_OPLEVELS) ? "AbkloUv" : "bklov"
 
