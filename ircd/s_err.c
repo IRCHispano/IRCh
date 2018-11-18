@@ -974,7 +974,7 @@ static Numeric replyTable[] = {
 /* 469 */
   { ERR_SSLONLYCHAN, "%s :Cannot join channel (+z)", "469" },
 /* 470 */
-  { 0 },
+  { ERR_OPERONLYCHAN, "%s :Cannot join channel (+O)", "470" },
 /* 471 */
   { ERR_CHANNELISFULL, "%s :Cannot join channel (+l)", "471" },
 /* 472 */

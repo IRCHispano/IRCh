@@ -391,6 +391,7 @@ extern const struct Numeric* get_error_numeric(int err);
 /* 	ERR_ONLYSERVERSCANCHANGE 468	   Dalnet,unreal */
 /*	ERR_LINKSET	     469	unreal */
 #define ERR_SSLONLYCHAN      469   /* Nefarious extension */
+#define ERR_OPERONLYCHAN     470   /* Nefarious extension */
 /*	ERR_LINKCHANNEL	     470	unreal */
 /*      ERR_KICKEDFROMCHAN   470         aircd */
 #define ERR_CHANNELISFULL    471

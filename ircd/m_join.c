@@ -191,6 +191,8 @@ int m_join(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
         /* Joining a zombie channel (zannel): give ops and increment TS. */
         flags = CHFL_CHANOP;
         chptr->creationtime++;
+      } else if ((chptr->mode.mode & MODE_SSLONLY) && !IsSSL(sptr)) {
+        err = ERR_SSLONLYCHAN;
       } else if (IsInvited(sptr, chptr)) {
         /* Invites bypass these other checks. */
       } else if (chptr->mode.mode & MODE_INVITEONLY)
@@ -199,6 +201,8 @@ int m_join(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
         err = ERR_CHANNELISFULL;
       else if ((chptr->mode.mode & MODE_REGONLY) && !IsAccount(sptr))
         err = ERR_NEEDREGGEDNICK;
+      else if ((chptr->mode.mode & MODE_OPERONLY) && !IsAnOper(sptr))
+        err = ERR_OPERONLYCHAN;
       else if (find_ban(sptr, chptr->banlist))
         err = ERR_BANNEDFROMCHAN;
       else if (*chptr->mode.key && (!key || strcmp(key, chptr->mode.key)))
@@ -226,13 +230,18 @@ int m_join(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
         case ERR_CHANNELISFULL:  err = 'l'; break;
         case ERR_BANNEDFROMCHAN: err = 'b'; break;
         case ERR_BADCHANNELKEY:  err = 'k'; break;
-        case ERR_NEEDREGGEDNICK: err = 'r'; break;
+        case ERR_NEEDREGGEDNICK: err = 'R'; break;
+        case ERR_OPERONLYCHAN:   err = 'O'; break;
+        case ERR_SSLONLYCHAN:    err = 'z'; break;
         default: err = '?'; break;
         }
         /* send accountability notice */
-        if (err)
+        if (err) {
+          sendcmdto_serv_butone(&me, CMD_DESYNCH, 0, ":OPER JOIN: %C JOIN %H (overriding +%c)",
+                                sptr, chptr, err);
           sendto_opmask_butone(0, SNO_HACK4, "OPER JOIN: %C JOIN %H "
                                "(overriding +%c)", sptr, chptr, err);
+        }
         err = 0;
       }
 
@@ -240,10 +249,10 @@ int m_join(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
       if (err) {
         switch(err) {
           case ERR_NEEDREGGEDNICK:
-            send_reply(sptr, 
-                       ERR_NEEDREGGEDNICK, 
-                       chptr->chname, 
-                       feature_str(FEAT_URLREG));            
+            send_reply(sptr,
+                       ERR_NEEDREGGEDNICK,
+                       chptr->chname,
+                       feature_str(FEAT_URLREG));
             break;
           default:
             send_reply(sptr, err, chptr->chname);

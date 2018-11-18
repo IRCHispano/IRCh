@@ -709,6 +709,14 @@ int member_can_send_to_channel(struct Membership* member, int reveal)
   if (member->channel->mode.mode & MODE_MODERATED)
     return 0;
 
+  /* If only IRC operators in opers may join and you're not one, you can't speak. */
+  if (member->channel->mode.mode & MODE_OPERONLY && !IsAnOper(member->user))
+    return 0;
+
+  /* If only SSL users may join and you're not one, you can't speak. */
+  if (member->channel->mode.mode & MODE_SSLONLY && !IsSSL(member->user))
+    return 0;
+
   /* If only logged in users may join and you're not one, you can't speak. */
   if (member->channel->mode.mode & MODE_REGONLY && !IsAccount(member->user))
     return 0;
@@ -756,7 +764,9 @@ int client_can_send_to_channel(struct Client *cptr, struct Channel *chptr, int r
    */
   if (!member) {
     if ((chptr->mode.mode & (MODE_NOPRIVMSGS|MODE_MODERATED)) ||
-	((chptr->mode.mode & MODE_REGONLY) && !IsAccount(cptr)))
+        ((chptr->mode.mode & MODE_OPERONLY) && !IsAnOper(cptr)) ||
+        ((chptr->mode.mode & MODE_SSLONLY) && !IsSSL(cptr)) ||
+        ((chptr->mode.mode & MODE_REGONLY) && !IsAccount(cptr)))
       return 0;
     else
       return !find_ban(cptr, chptr->banlist);
@@ -782,6 +792,8 @@ const char* find_no_nickchange_channel(struct Client* cptr)
       if (IsVoicedOrOpped(member))
         continue;
       if ((member->channel->mode.mode & MODE_MODERATED)
+          || (member->channel->mode.mode & MODE_OPERONLY && !IsAnOper(cptr))
+          || (member->channel->mode.mode & MODE_SSLONLY && !IsSSL(cptr))
           || (member->channel->mode.mode & MODE_REGONLY && !IsAccount(cptr))
           || is_banned(member))
         return member->channel->chname;
@@ -836,10 +848,14 @@ void channel_modes(struct Client *cptr, char *mbuf, char *pbuf, int buflen,
     *mbuf++ = 'd';
   if (chptr->mode.mode & MODE_REGONLY)
     *mbuf++ = 'R';
+  if (chptr->mode.mode & MODE_OPERONLY)
+    *mbuf++ = 'O';
   if (chptr->mode.mode & MODE_NOCOLOR)
     *mbuf++ = 'c';
   if (chptr->mode.mode & MODE_NOCTCP)
     *mbuf++ = 'C';
+  if (chptr->mode.mode & MODE_SSLONLY)
+    *mbuf++ = 'z';
   if (chptr->mode.limit) {
     *mbuf++ = 'l';
     ircd_snprintf(0, pbuf, buflen, "%u", chptr->mode.limit);
@@ -1535,8 +1551,10 @@ modebuf_flush_int(struct ModeBuf *mbuf, int all)
     MODE_REGISTERED,	'r',
     MODE_DELJOINS,      'D',
     MODE_REGONLY,	'R',
+    MODE_OPERONLY,	'O',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_SSLONLY,	'z',
 /*  MODE_KEY,		'k', */
 /*  MODE_BAN,		'b', */
     MODE_LIMIT,		'l',
@@ -1966,9 +1984,9 @@ modebuf_mode(struct ModeBuf *mbuf, unsigned int mode)
   assert(0 != (mode & (MODE_ADD | MODE_DEL)));
 
   mode &= (MODE_ADD | MODE_DEL | MODE_PRIVATE | MODE_SECRET | MODE_MODERATED |
-	   MODE_TOPICLIMIT | MODE_INVITEONLY | MODE_NOPRIVMSGS | MODE_REGONLY |
-           MODE_NOCOLOR | MODE_NOCTCP |
-           MODE_DELJOINS | MODE_WASDELJOINS | MODE_REGISTERED);
+	   MODE_TOPICLIMIT | MODE_INVITEONLY | MODE_NOPRIVMSGS | MODE_REGISTERED |
+           MODE_NOCOLOR | MODE_NOCTCP | MODE_OPERONLY | MODE_SSLONLY |
+           MODE_DELJOINS | MODE_WASDELJOINS | MODE_REGONLY);
 
   if (!(mode & ~(MODE_ADD | MODE_DEL))) /* don't add empty modes... */
     return;
@@ -2100,9 +2118,11 @@ modebuf_extract(struct ModeBuf *mbuf, char *buf)
 /*  MODE_BAN,		'b', */
     MODE_LIMIT,		'l',
     MODE_REGONLY,	'R',
+    MODE_OPERONLY,	'O',
     MODE_DELJOINS,      'D',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_SSLONLY,	'z',
     0x0, 0x0
   };
   unsigned int add;
@@ -3243,9 +3263,11 @@ mode_parse(struct ModeBuf *mbuf, struct Client *cptr, struct Client *sptr,
     MODE_BAN,		'b',
     MODE_LIMIT,		'l',
     MODE_REGONLY,	'R',
+    MODE_OPERONLY,	'O',
     MODE_DELJOINS,      'D',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_SSLONLY,	'z',
     MODE_ADD,		'+',
     MODE_DEL,		'-',
     0x0, 0x0
@@ -3326,9 +3348,22 @@ mode_parse(struct ModeBuf *mbuf, struct Client *cptr, struct Client *sptr,
 	mode_parse_upass(&state, flag_p);
 	break;
 
+      case 'O':
+        if (IsServer(cptr) || IsAnOper(sptr))
+          mode_parse_mode(&state, flag_p);
+        break;
+
+      case 'z':
+        if (IsServer(cptr) || IsAnOper(sptr) || IsSSL(sptr))
+          mode_parse_mode(&state, flag_p);
+        break;
+
       case 'b': /* deal with bans */
 	mode_parse_ban(&state, flag_p);
 	break;
+
+      case 'r':
+        break;
 
       case 'o': /* deal with ops/voice */
       case 'v':

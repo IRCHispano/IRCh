@@ -64,10 +64,12 @@ do_clearmode(struct Client *cptr, struct Client *sptr, struct Channel *chptr,
     MODE_KEY,		'k',
     MODE_BAN,		'b',
     MODE_LIMIT,		'l',
-    MODE_REGONLY,	'r',
+    MODE_REGONLY,	'R',
     MODE_DELJOINS,      'D',
+    MODE_OPERONLY,	'O',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_SSLONLY,	'z',
     0x0, 0x0
   };
   int *flag_p;
