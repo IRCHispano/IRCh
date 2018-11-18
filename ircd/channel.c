@@ -709,6 +709,10 @@ int member_can_send_to_channel(struct Membership* member, int reveal)
   if (member->channel->mode.mode & MODE_MODERATED)
     return 0;
 
+  /* Same as above but includes logged in users as priviledged too */
+  if (member->channel->mode.mode & MODE_MODERATENOREG && !IsAccount(member->user))
+    return 0;
+
   /* If only IRC operators in opers may join and you're not one, you can't speak. */
   if (member->channel->mode.mode & MODE_OPERONLY && !IsAnOper(member->user))
     return 0;
@@ -764,6 +768,7 @@ int client_can_send_to_channel(struct Client *cptr, struct Channel *chptr, int r
    */
   if (!member) {
     if ((chptr->mode.mode & (MODE_NOPRIVMSGS|MODE_MODERATED)) ||
+        ((chptr->mode.mode & MODE_MODERATENOREG) && !IsAccount(cptr)) ||
         ((chptr->mode.mode & MODE_OPERONLY) && !IsAnOper(cptr)) ||
         ((chptr->mode.mode & MODE_SSLONLY) && !IsSSL(cptr)) ||
         ((chptr->mode.mode & MODE_REGONLY) && !IsAccount(cptr)))
@@ -792,6 +797,7 @@ const char* find_no_nickchange_channel(struct Client* cptr)
       if (IsVoicedOrOpped(member))
         continue;
       if ((member->channel->mode.mode & MODE_MODERATED)
+          || (member->channel->mode.mode & MODE_MODERATENOREG && !IsAccount(cptr))
           || (member->channel->mode.mode & MODE_OPERONLY && !IsAnOper(cptr))
           || (member->channel->mode.mode & MODE_SSLONLY && !IsSSL(cptr))
           || (member->channel->mode.mode & MODE_REGONLY && !IsAccount(cptr))
@@ -854,6 +860,8 @@ void channel_modes(struct Client *cptr, char *mbuf, char *pbuf, int buflen,
     *mbuf++ = 'c';
   if (chptr->mode.mode & MODE_NOCTCP)
     *mbuf++ = 'C';
+  if (chptr->mode.mode & MODE_MODERATENOREG)
+    *mbuf++ = 'M';
   if (chptr->mode.mode & MODE_NONOTICE)
     *mbuf++ = 'N';
   if (chptr->mode.mode & MODE_SSLONLY)
@@ -1556,6 +1564,7 @@ modebuf_flush_int(struct ModeBuf *mbuf, int all)
     MODE_OPERONLY,	'O',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_MODERATENOREG,	'M',
     MODE_NONOTICE,	'N',
     MODE_SSLONLY,	'z',
 /*  MODE_KEY,		'k', */
@@ -1990,7 +1999,7 @@ modebuf_mode(struct ModeBuf *mbuf, unsigned int mode)
 	   MODE_TOPICLIMIT | MODE_INVITEONLY | MODE_NOPRIVMSGS | MODE_REGISTERED |
            MODE_NOCOLOR | MODE_NOCTCP | MODE_OPERONLY | MODE_SSLONLY |
            MODE_DELJOINS | MODE_WASDELJOINS | MODE_REGONLY |
-           MODE_NONOTICE);
+           MODE_MODERATENOREG | MODE_NONOTICE);
 
   if (!(mode & ~(MODE_ADD | MODE_DEL))) /* don't add empty modes... */
     return;
@@ -2126,6 +2135,7 @@ modebuf_extract(struct ModeBuf *mbuf, char *buf)
     MODE_DELJOINS,      'D',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_MODERATENOREG,	'M',
     MODE_NONOTICE,	'N',
     MODE_SSLONLY,	'z',
     0x0, 0x0
@@ -3272,6 +3282,7 @@ mode_parse(struct ModeBuf *mbuf, struct Client *cptr, struct Client *sptr,
     MODE_DELJOINS,      'D',
     MODE_NOCOLOR,       'c',
     MODE_NOCTCP,        'C',
+    MODE_MODERATENOREG,	'M',
     MODE_NONOTICE,	'N',
     MODE_SSLONLY,	'z',
     MODE_ADD,		'+',
