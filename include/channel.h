@@ -105,8 +105,9 @@ struct Client;
 #define MODE_DELJOINS   0x1000  	/**< New join messages are delayed */
 #define MODE_REGISTERED 0x2000  	/**< Channel marked as registered
 					 * (for future semantic expansion) */
-#define MODE_NOCOLOR    0x4000          /**< +c No colors */
+#define MODE_NOCOLOR    0x4000          /**< +c No mirc/ANSI colors/bold */
 #define MODE_NOCTCP     0x8000          /**< +C No CTCPs except ACTION */
+/* 0x10000 is reserved for Owner */
 #define MODE_SAVE	0x20000		/**< save this mode-with-arg 'til
 					 * later */
 #define MODE_FREE	0x40000 	/**< string needs to be passed to
@@ -118,13 +119,14 @@ struct Client;
 					 * pending */
 #define MODE_SSLONLY	0x800000	/**< +Z Only SSL users (user mode +z) may join */
 #define MODE_OPERONLY	0x1000000	/**< +O Only +o users may join */
+#define MODE_NONOTICE	0x2000000	/**< +N No channel notices */
 
 /** mode flags which take another parameter (With PARAmeterS)
  */
 #define MODE_WPARAS     (MODE_CHANOP|MODE_VOICE|MODE_BAN|MODE_KEY|MODE_LIMIT|MODE_APASS|MODE_UPASS)
 
 /** Available Channel modes */
-#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDdROcCz" : "biklmnopstvrDdROcCz"
+#define infochanmodes feature_bool(FEAT_OPLEVELS) ? "AbiklmnopstUvrDdROcCNz" : "biklmnopstvrDdROcCNz"
 /** Available Channel modes that take parameters */
 #define infochanmodeswithparams feature_bool(FEAT_OPLEVELS) ? "AbkloUv" : "bklov"
 

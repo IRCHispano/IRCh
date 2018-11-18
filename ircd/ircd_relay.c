@@ -155,6 +155,11 @@ void relay_channel_notice(struct Client* sptr, const char* name, const char* tex
       check_target_limit(sptr, chptr, chptr->chname, 0))
     return;
 
+  if ((chptr->mode.mode & MODE_NONOTICE)) {
+    send_reply(sptr, ERR_CANNOTSENDTOCHAN, chptr->chname);
+    return;
+  }
+
   if (chptr->mode.mode & MODE_NOCOLOR) {
     for (ch = text; *ch != '\0'; ++ch) {
       if (*ch == 3 || *ch == 27) {

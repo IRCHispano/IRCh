@@ -58,7 +58,8 @@ int m_wallvoices(struct Client* cptr, struct Client* sptr, int parc, char* parv[
     return send_reply(sptr, ERR_NOTEXTTOSEND);
 
   if (IsChannelName(parv[1]) && (chptr = FindChannel(parv[1]))) {
-    if (client_can_send_to_channel(sptr, chptr, 0)) {
+    if (client_can_send_to_channel(sptr, chptr, 0)
+        && !(chptr->mode.mode & MODE_NONOTICE)) {
       if ((chptr->mode.mode & MODE_NOPRIVMSGS) &&
           check_target_limit(sptr, chptr, chptr->chname, 0))
         return 0;
