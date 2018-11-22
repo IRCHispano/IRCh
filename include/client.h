@@ -97,7 +97,7 @@ typedef unsigned long flagpage_t;
 #define FlagClr(set,flag) ((set)->bits[FLAGSET_INDEX(flag)] &= ~FLAGSET_MASK(flag))
 
 /** String containing valid user modes, in no particular order. */
-#define infousermodes "diOoswkgx"
+#define infousermodes "diOoswkgxrSaChBb"
 
 /** Operator privileges. */
 enum Priv
@@ -172,6 +172,10 @@ enum Flag
                                        don't display channels in /whois */
     FLAG_DEBUG,                     /**< +g send global debug/anti-hack info */
     FLAG_ACCOUNT,                   /**< +r account name has been set */
+    FLAG_NICKSUSPEND,               /**< +S nick suspended */
+    FLAG_ADMIN,                     /**< +a nick is Services Admin */
+    FLAG_CODER,                     /**< +C nick is Services Coder */
+    FLAG_HELPER,                    /**< +h available to help */
     FLAG_SERVICESBOT,               /**< +B nick is services Bot */
     FLAG_USERBOT,                   /**< +b nick is user Bot (Docking) */
     FLAG_HIDDENHOST,                /**< +x user's host is hidden */
@@ -618,6 +622,14 @@ struct Client {
 #define IsService(x)            HasFlag(x, FLAG_SERVICE)
 /** Return non-zero if the client has an account stamp. */
 #define IsAccount(x)            HasFlag(x, FLAG_ACCOUNT)
+/** Return non-zero if the client has set mode +S (nick suspended). */
+#define IsNickSuspended(x)      HasFlag(x, FLAG_NICKSUSPEND)
+/** Return non-zero if the client has set mode +a (Services Admin). */
+#define IsAdmin(x)              HasFlag(x, FLAG_ADMIN)
+/** Return non-zero if the client has set mode +N (Network Coder). */
+#define IsCoder(x)              HasFlag(x, FLAG_CODER)
+/** Return non-zero if the client has set mode +h (Helper). */
+#define IsHelper(x)             HasFlag(x, FLAG_HELPER)
 /** Return non-zero if the client has set mode +B (Services Bot). */
 #define IsServicesBot(x)        HasFlag(x, FLAG_SERVICESBOT)
 /** Return non-zero if the client has set mode +b (User Bot). */
@@ -675,6 +687,14 @@ struct Client {
 #define SetService(x)           SetFlag(x, FLAG_SERVICE)
 /** Mark a client as having an account stamp. */
 #define SetAccount(x)           SetFlag(x, FLAG_ACCOUNT)
+/** Mark a client as having mode +S (nick suspended). */
+#define SetNickSuspended(x)     SetFlag(x, FLAG_NICKSUSPEND)
+/** Mark a client as having mode +a (Services Admin). */
+#define SetAdmin(x)             SetFlag(x, FLAG_ADMIN)
+/** Mark a client as having mode +N (Network Coder). */
+#define SetCoder(x)             SetFlag(x, FLAG_CODER)
+/** Mark a client as having mode +h (Helper). */
+#define SetHelper(x)            SetFlag(x, FLAG_HELPER)
 /** Mark a client as having mode +B (Services Bot). */
 #define SetServicesBot(x)       SetFlag(x, FLAG_SERVICESBOT)
 /** Mark a client as having mode +b (User Bot). */
@@ -720,6 +740,16 @@ struct Client {
 #define ClearWallops(x)         ClrFlag(x, FLAG_WALLOP)
 /** Remove mode +s (server notices) from the client. */
 #define ClearServNotice(x)      ClrFlag(x, FLAG_SERVNOTICE)
+/** Remove mode +r (account) from the client. */
+#define ClearAccount(x)           ClrFlag(x, FLAG_ACCOUNT)
+/** Remove mode +S (nick suspended) from the client. */
+#define ClearNickSuspended(x)   ClrFlag(x, FLAG_NICKSUSPEND)
+/** Remove mode +A (Services Admin) from the client. */
+#define ClearAdmin(x)           ClrFlag(x, FLAG_ADMIN)
+/** Remove mode +N (Network Coder) from the client. */
+#define ClearCoder(x)           ClrFlag(x, FLAG_CODER)
+/** Remove mode +h (Helper) from the client. */
+#define ClearHelper(x)          ClrFlag(x, FLAG_HELPER)
 /** Remove mode +B (Services Bot) from the client. */
 #define ClearServicesBot(x)     ClrFlag(x, FLAG_SERVICESBOT)
 /** Remove mode +b (User Bot) from the client. */

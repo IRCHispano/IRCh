@@ -524,10 +524,14 @@ static const struct UserMode {
   { FLAG_CHSERV,      'k' },
   { FLAG_DEBUG,       'g' },
   { FLAG_ACCOUNT,     'r' },
+  { FLAG_NICKSUSPEND, 'S' },
+  { FLAG_ADMIN,       'a' },
+  { FLAG_CODER,       'C' },
+  { FLAG_HELPER,      'h' },
   { FLAG_SERVICESBOT, 'B' },
   { FLAG_USERBOT,     'b' },
   { FLAG_HIDDENHOST,  'x' },
-  { FLAG_SSL,          'z' }
+  { FLAG_SSL,         'z' }
 };
 
 /** Length of #userModeList. */
@@ -1085,7 +1089,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         if (what == MODE_ADD)
           SetLocOp(sptr);
         else
-        { 
+        {
           ClrFlag(sptr, FLAG_OPER);
           ClrFlag(sptr, FLAG_LOCOP);
           if (MyConnect(sptr))
@@ -1115,6 +1119,30 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
           SetDebug(sptr);
         else
           ClearDebug(sptr);
+        break;
+      case 'S':
+        if (what == MODE_ADD)
+          SetNickSuspended(sptr);
+        else
+          ClearNickSuspended(sptr);
+        break;
+      case 'a':
+        if (what == MODE_ADD)
+          SetAdmin(sptr);
+        else
+          ClearAdmin(sptr);
+        break;
+      case 'c':
+        if (what == MODE_ADD)
+          SetCoder(sptr);
+        else
+          ClearCoder(sptr);
+        break;
+      case 'h':
+        if (what == MODE_ADD)
+          SetHelper(sptr);
+        else
+          ClearHelper(sptr);
         break;
       case 'B':
         if (what == MODE_ADD)
@@ -1163,6 +1191,14 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
       ClearLocOp(sptr);
     if (!FlagHas(&setflags, FLAG_ACCOUNT) && IsAccount(sptr))
       ClrFlag(sptr, FLAG_ACCOUNT);
+    if (!FlagHas(&setflags, FLAG_NICKSUSPEND) && IsNickSuspended(sptr))
+      ClearNickSuspended(sptr);
+    if (!FlagHas(&setflags, FLAG_ADMIN))
+      ClearAdmin(sptr);
+    if (!FlagHas(&setflags, FLAG_CODER))
+      ClearCoder(sptr);
+    if (!FlagHas(&setflags, FLAG_HELPER))
+      ClearHelper(sptr);
     if (!FlagHas(&setflags, FLAG_SERVICESBOT))
       ClearServicesBot(sptr);
     if (!FlagHas(&setflags, FLAG_USERBOT))

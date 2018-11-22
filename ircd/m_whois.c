@@ -151,10 +151,29 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
     if (user->away)
        send_reply(sptr, RPL_AWAY, name, user->away);
 
+#if defined(DDB)
+    if (IsAccount(acptr))
+      send_reply(sptr, RPL_WHOISREGNICK, name);
+    else if (IsNickSuspended(acptr))
+      send_reply(sptr, RPL_WHOISSUSPEND, name);
+#endif
 
+    if (IsHelper(acptr) && /*!IsMsgOnlyReg(acptr) &&*/ !IsAdmin(acptr) && !IsCoder(acptr))
+      send_reply(sptr, RPL_WHOISHELPOP, name);
 
     if (SeeOper(sptr,acptr))
-       send_reply(sptr, RPL_WHOISOPERATOR, name);
+    {
+       if (IsAdmin(acptr))
+         send_reply(sptr, SND_EXPLICIT | RPL_WHOISOPERATOR, "%s :is a Services Administrator", name);
+       else if (IsCoder(acptr))
+         send_reply(sptr, SND_EXPLICIT | RPL_WHOISOPERATOR, "%s :is a Network coder", name);
+       else if (IsOper(acptr) && IsHelper(acptr))
+         send_reply(sptr, SND_EXPLICIT | RPL_WHOISOPERATOR, "%s :is a Services Operator", name);
+       else if (IsOper(acptr))
+         send_reply(sptr, RPL_WHOISOPERATOR, name);
+       else
+         send_reply(sptr, SND_EXPLICIT | RPL_WHOISOPERATOR, "%s :is a Local IRC Operator", name);
+    }
 
     if (IsServicesBot(acptr))
        send_reply(sptr, RPL_WHOISBOT, name, feature_str(FEAT_NETWORK));
@@ -162,8 +181,10 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
     if (IsUserBot(acptr))
        send_reply(sptr, RPL_WHOISUSERBOT, name);
 
+#if !defined(DDB)
     if (IsAccount(acptr))
       send_reply(sptr, RPL_WHOISACCOUNT, name, user->account);
+#endif
 
     if (HasHiddenHost(acptr) && (IsAnOper(sptr) || acptr == sptr))
       send_reply(sptr, RPL_WHOISACTUALLY, name, user->username,

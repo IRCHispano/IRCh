@@ -214,6 +214,7 @@ extern const struct Numeric* get_error_numeric(int err);
 #define RPL_UNAWAY           305
 #define RPL_NOWAWAY          306
                                         /* NotAway, aircd */
+#define RPL_WHOISREGNICK     307        /* IRC-Hispano, Dalnet, Unreal extension */
 /*	RPL_WHOISREGNICK     307 	Numeric List: Dalnet */
 /*	RPL_SUSERHOST	     307	austnet */
 /*      RPL_NOTIFYACTION     308         aircd */
@@ -224,6 +225,7 @@ extern const struct Numeric* get_error_numeric(int err);
 /*	RPL_ENDOFRULES	     309	unreal */
 /*	RPL_WHOISHELPER	     309	austnet */
 /*      RPL_WHOISSVCMSG      310         Dalnet */
+#define RPL_WHOISHELPOP	     310        /* IRC-Hispano, Unreal extension */
 /*	RPL_WHOISHELPOP	     310	unreal */
 /*	RPL_WHOISSERVICE     310	austnet */
 #define RPL_WHOISUSER        311        /* See also RPL_ENDOFWHOIS */
@@ -312,6 +314,7 @@ extern const struct Numeric* get_error_numeric(int err);
 /*	RPL_ALIST	     388	unreal */
 /*	RPL_ENDOFALIST	     389	unreal */
 
+#define RPL_WHOISSUSPEND     390        /* IRC-Hispano extension */
 #define RPL_TIME             391
 /*      RPL_START_USERS      392        Dalnet/EFnet/IRCnet */
 /*      RPL_USERS            393        Dalnet/EFnet/IRCnet */

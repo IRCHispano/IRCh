@@ -648,13 +648,13 @@ static Numeric replyTable[] = {
 /* 306 */
   { RPL_NOWAWAY, ":You have been marked as being away", "306" },
 /* 307 */
-  { 0 },
+  { RPL_WHOISREGNICK, "%s :is a registered and protected nick", "307" },
 /* 308 */
   { 0 },
 /* 309 */
   { 0 },
 /* 310 */
-  { 0 },
+  { RPL_WHOISHELPOP, "%s :is available for help", "310" },
 /* 311 */
   { RPL_WHOISUSER, "%s %s %s * :%s", "311" },
 /* 312 */
@@ -814,7 +814,7 @@ static Numeric replyTable[] = {
 /* 389 */
   { 0 },
 /* 390 */
-  { 0 },
+  { RPL_WHOISSUSPEND, "%s :is a suspended nick", "390" },
 /* 391 */
   { RPL_TIME, "%s %Tu %ld :%s", "391" },
 /* 392 */

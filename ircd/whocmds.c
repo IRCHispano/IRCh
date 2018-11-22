@@ -204,6 +204,16 @@ void do_who(struct Client* sptr, struct Client* acptr, struct Channel* repchan,
       if (SendDebug(acptr))
         *(p1++) = 'g';
     }
+    if (IsAccount(acptr))
+      *(p1++) = 'r';
+    if (IsNickSuspended(acptr))
+      *(p1++) = 'S';
+    if (IsAdmin(acptr))
+      *(p1++) = 'a';
+    if (IsCoder(acptr))
+      *(p1++) = 'C';
+    if (IsHelper(acptr))
+      *(p1++) = 'h';
     if (IsServicesBot(acptr))
       *(p1++) = 'B';
     if (IsUserBot(acptr))
