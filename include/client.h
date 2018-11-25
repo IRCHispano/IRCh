@@ -97,7 +97,7 @@ typedef unsigned long flagpage_t;
 #define FlagClr(set,flag) ((set)->bits[FLAGSET_INDEX(flag)] &= ~FLAGSET_MASK(flag))
 
 /** String containing valid user modes, in no particular order. */
-#define infousermodes "diOoswkgxrSaChBb"
+#define infousermodes "diOoswkgxrSaChBbRcnXzIW"
 
 /** Operator privileges. */
 enum Priv
@@ -133,6 +133,10 @@ enum Priv
     PRIV_FORCE_OPMODE, /**< can hack modes on quarantined channels */
     PRIV_FORCE_LOCAL_OPMODE, /**< can hack modes on quarantined local channels */
     PRIV_APASS_OPMODE, /**< can hack modes +A/-A/+U/-U */
+    PRIV_CHANSERV, /**< oper can set/unset user mode +k */
+    PRIV_HIDDEN_VIEWER, /**< oper can set/unset user mode +X */
+    PRIV_WHOIS_NOTICE, /**< oper can set/unset user mode +W */
+    PRIV_HIDE_IDLE, /**< oper can set/unset user mode +I */
     PRIV_LAST_PRIV /**< number of privileges */
   };
 
@@ -179,7 +183,13 @@ enum Flag
     FLAG_SERVICESBOT,               /**< +B nick is services Bot */
     FLAG_USERBOT,                   /**< +b nick is user Bot (Docking) */
     FLAG_HIDDENHOST,                /**< +x user's host is hidden */
+    FLAG_MSGONLYREG,                /**< +R only privmsg/notices from +r */
+    FLAG_STRIPCOLOUR,               /**< +c user cannot received colours messages */
+    FLAG_NOCHAN,                    /**< +n user's channels are hidden */
+    FLAG_VIEWHIDDENHOST,            /**< +X can view hiddenhost */
     FLAG_SSL,                       /**< +z User is connected via SSL */
+    FLAG_NOIDLE,                    /**< +I hide idle time */
+    FLAG_WHOIS_NOTICE,              /**< +W Whois */
 
 #if defined(USE_SSL)
     FLAG_STARTTLS,                  /**< User is connecting with StartTLS */
@@ -642,7 +652,19 @@ struct Client {
 /** Return non-zero if the client has operator or server privileges. */
 #define IsPrivileged(x)         (IsAnOper(x) || IsServer(x))
 /** Return non-zero if the client's host is hidden. */
+#if defined(DDB)
+#define HasHiddenHost(x)        (IsHiddenHost(x))
+#else
 #define HasHiddenHost(x)        (IsHiddenHost(x) && IsAccount(x))
+#endif
+/** Return non-zero if the client has set mode +n (channel hiding). */
+#define IsNoChan(x)		HasFlag(x, FLAG_NOCHAN)
+/** Return non-zero if the client has set mode +R. */
+#define IsMsgOnlyReg(x)         HasFlag(x, FLAG_MSGONLYREG)
+/** Return non-zero if the client has set mode +c (strip colour). */
+#define IsStripColour(x)        HasFlag(x, FLAG_STRIPCOLOUR)
+/** Return non-zero if the client has set mode +X (can view hidden host). */
+#define IsViewHiddenHost(x)     HasFlag(x, FLAG_VIEWHIDDENHOST)
 /** Return non-zero if the client is connected via SSL. */
 #define IsSSL(x)                HasFlag(x, FLAG_SSL)
 #if defined(USE_SSL)
@@ -651,6 +673,10 @@ struct Client {
 /** Return non-zero if the client still needs SSL_accept(). */
 #define IsSSLNeedAccept(x)      HasFlag(x, FLAG_SSLNEEDACCEPT)
 #endif
+/** Return non-zero if the client has set mode +I (hidden idle in whois). */
+#define IsNoIdle(x)		HasFlag(x, FLAG_NOIDLE)
+/** Return non-zero if the client has set mode +W (whois notices). */
+#define IsWhoisNotice(x)        HasFlag(x, FLAG_WHOIS_NOTICE)
 /** Mark a client as having an in-progress net.burst. */
 #define SetBurst(x)             SetFlag(x, FLAG_BURST)
 /** Mark a client as being between EOB and EOB ACK. */
@@ -701,6 +727,14 @@ struct Client {
 #define SetUserBot(x)           SetFlag(x, FLAG_USERBOT)
 /** Mark a client as having mode +x (hidden host). */
 #define SetHiddenHost(x)        SetFlag(x, FLAG_HIDDENHOST)
+/** Mark a client as having mode +R. */
+#define SetMsgOnlyReg(x)        SetFlag(x, FLAG_MSGONLYREG)
+/** Mark a client as having mode +c (Strip Colour). */
+#define SetStripColour(x)       SetFlag(x, FLAG_STRIPCOLOUR)
+/** Mark a client as having mode +n (channel hiding). */
+#define SetNoChan(x)            SetFlag(x, FLAG_NOCHAN)
+/** Mark a client as having mode +X (can view hidden host). */
+#define SetViewHiddenHost(x)    SetFlag(x, FLAG_VIEWHIDDENHOST)
 /** Mark a client as having connected via SSL. */
 #define SetSSL(x)               SetFlag(x, FLAG_SSL)
 #if defined(USE_SSL)
@@ -709,6 +743,10 @@ struct Client {
 /** Mark a client as needing SSL_accept(). */
 #define SetSSLNeedAccept(x)     SetFlag(x, FLAG_SSLNEEDACCEPT)
 #endif
+/** Mark a client as having mode +I (hidden idle). */
+#define SetNoIdle(x)            SetFlag(x, FLAG_NOIDLE)
+/** Mark a client as having mode +W (whois notices). */
+#define SetWhoisNotice(x)       SetFlag(x, FLAG_WHOIS_NOTICE)
 /** Mark a client as having a pending PING. */
 #define SetPingSent(x)          SetFlag(x, FLAG_PINGSENT)
 
@@ -756,6 +794,14 @@ struct Client {
 #define ClearUserBot(x)         ClrFlag(x, FLAG_USERBOT)
 /** Remove mode +x (hidden host) from the client. */
 #define ClearHiddenHost(x)      ClrFlag(x, FLAG_HIDDENHOST)
+/** Remove mode +n (hide channels in whois) from the client. */
+#define ClearNoChan(x)	        ClrFlag(x, FLAG_NOCHAN)
+/** Remove mode +R from the client. */
+#define ClearMsgOnlyReg(x)      ClrFlag(x, FLAG_MSGONLYREG)
+/** Remove mode +c (strip colour) from the client. */
+#define ClearStripColour(x)     ClrFlag(x, FLAG_STRIPCOLOUR)
+/** Remove mode +X (can view hidden host) from the client. */
+#define ClearViewHiddenHost(x)  ClrFlag(x, FLAG_VIEWHIDDENHOST)
 /** Client is no longer connected via SSL (this cannot be possible). */
 #define ClearSSL(x)             ClrFlag(x, FLAG_SSL)
 #if defined(USE_SSL)
@@ -764,6 +810,10 @@ struct Client {
 /** Client no longer needs SSL_accept(). */
 #define ClearSSLNeedAccept(x)   ClrFlag(x, FLAG_SSLNEEDACCEPT)
 #endif
+/** Remove mode +I (hide idle time in whois) from the client. */
+#define ClearNoIdle(x)	        ClrFlag(x, FLAG_NOIDLE)
+/** Remove mode +W (whois notices) from the client. */
+#define ClearWhoisNotice(x)     ClrFlag(x, FLAG_WHOIS_NOTICE)
 /** Clear the client's pending PING flag. */
 #define ClearPingSent(x)        ClrFlag(x, FLAG_PINGSENT)
 /** Clear the client's HUB flag. */

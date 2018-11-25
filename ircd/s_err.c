@@ -1006,7 +1006,7 @@ static Numeric replyTable[] = {
 /* 485 */
   { 0 },
 /* 486 */
-  { 0 },
+  { ERR_NONONREG, ":You need to register your nick to talk with %s", "486" },
 /* 487 */
   { 0 },
 /* 488 */

@@ -78,9 +78,9 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
   int mlen;
   int len;
   static char buf[512];
-  
+
   const struct User* user = cli_user(acptr);
-  const char* name = (!*(cli_name(acptr))) ? "?" : cli_name(acptr);  
+  const char* name = (!*(cli_name(acptr))) ? "?" : cli_name(acptr);
   a2cptr = feature_bool(FEAT_HIS_WHOIS_SERVERNAME) && !IsAnOper(sptr)
       && sptr != acptr ? &his : user->server;
   assert(user);
@@ -88,7 +88,7 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
 		   cli_info(acptr));
 
   /* Display the channels this user is on. */
-  if (!IsChannelService(acptr))
+  if ((!IsChannelService(acptr) && !IsNoChan(acptr)) || (acptr==sptr) || IsAnOper(sptr))
   {
     struct Membership* chan;
     mlen = strlen(cli_name(&me)) + strlen(cli_name(sptr)) + 12 + strlen(name);
@@ -97,7 +97,7 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
     for (chan = user->channel; chan; chan = chan->next_channel)
     {
        chptr = chan->channel;
-       
+
        if (!ShowChannel(sptr, chptr)
            && !(IsOper(sptr) && IsLocalChannel(chptr->chname)))
           continue;
@@ -158,7 +158,7 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
       send_reply(sptr, RPL_WHOISSUSPEND, name);
 #endif
 
-    if (IsHelper(acptr) && /*!IsMsgOnlyReg(acptr) &&*/ !IsAdmin(acptr) && !IsCoder(acptr))
+    if (IsHelper(acptr) && !IsMsgOnlyReg(acptr) && !IsAdmin(acptr) && !IsCoder(acptr))
       send_reply(sptr, RPL_WHOISHELPOP, name);
 
     if (SeeOper(sptr,acptr))
@@ -201,8 +201,9 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
         send_reply(sptr, RPL_WHOISSSLFP, name, cli_sslclifp(acptr));
     }
 
-    if (MyConnect(acptr) && (!feature_bool(FEAT_HIS_WHOIS_IDLETIME) ||
-                             (sptr == acptr || IsAnOper(sptr) || parc >= 3)))
+    if (MyConnect(acptr) && (IsAnOper(sptr) || (!IsNoIdle(acptr) &&
+          (!feature_bool(FEAT_HIS_WHOIS_IDLETIME) || sptr == acptr ||
+             parc >= 3))))
        send_reply(sptr, RPL_WHOISIDLE, name, CurrentTime - user->last,
                   cli_firsttime(acptr));
     if (MyConnect(acptr)
@@ -211,6 +212,12 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
         && ((wline = cli_wline(acptr)) != NULL))
         send_reply(sptr, RPL_WHOISWEBIRC, name, wline->description
                    ? wline->description : "(unspecified WebIRC proxy)");
+
+    if (IsOper(acptr) && IsWhoisNotice(acptr) && (sptr != acptr))
+      sendcmdto_one(&me, CMD_NOTICE, acptr,
+                    "%C :*** Notice -- %s (%s@%s) did a /whois on you.",
+                    acptr, cli_name(sptr), cli_user(sptr)->username,
+                    cli_user(sptr)->host);
   }
 }
 

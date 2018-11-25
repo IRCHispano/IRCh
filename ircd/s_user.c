@@ -531,7 +531,13 @@ static const struct UserMode {
   { FLAG_SERVICESBOT, 'B' },
   { FLAG_USERBOT,     'b' },
   { FLAG_HIDDENHOST,  'x' },
-  { FLAG_SSL,         'z' }
+  { FLAG_MSGONLYREG,  'R' },
+  { FLAG_STRIPCOLOUR, 'c' },
+  { FLAG_NOCHAN,      'n' },
+  { FLAG_VIEWHIDDENHOST, 'X' },
+  { FLAG_SSL,         'z' },
+  { FLAG_NOIDLE,      'I' },
+  { FLAG_WHOIS_NOTICE, 'N' },
 };
 
 /** Length of #userModeList. */
@@ -1132,7 +1138,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         else
           ClearAdmin(sptr);
         break;
-      case 'c':
+      case 'C':
         if (what == MODE_ADD)
           SetCoder(sptr);
         else
@@ -1160,11 +1166,47 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         if (what == MODE_ADD)
 	  do_host_hiding = 1;
 	break;
+      case 'R':
+        if (what == MODE_ADD)
+          SetMsgOnlyReg(sptr);
+        else
+          ClearMsgOnlyReg(sptr);
+        break;
+      case 'c':
+        if (what == MODE_ADD)
+          SetStripColour(sptr);
+        else
+          ClearStripColour(sptr);
+        break;
+      case 'n':
+        if (what == MODE_ADD)
+          SetNoChan(sptr);
+        else
+          ClearNoChan(sptr);
+        break;
+      case 'X':
+        if (what == MODE_ADD)
+          SetViewHiddenHost(sptr);
+        else
+          ClearViewHiddenHost(sptr);
+        break;
       case 'z':
         if (what == MODE_ADD)
           SetSSL(sptr);
         else
           ClearSSL(sptr);
+        break;
+      case 'I':
+        if (what == MODE_ADD)
+          SetNoIdle(sptr);
+        else
+          ClearNoIdle(sptr);
+        break;
+      case 'W':
+        if (what == MODE_ADD)
+          SetWhoisNotice(sptr);
+        else
+          ClearWhoisNotice(sptr);
         break;
       case 'r':
 	if (*(p + 1) && (what == MODE_ADD)) {
@@ -1203,15 +1245,27 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
       ClearServicesBot(sptr);
     if (!FlagHas(&setflags, FLAG_USERBOT))
       ClearUserBot(sptr);
+    if (!FlagHas(&setflags, FLAG_MSGONLYREG) && IsMsgOnlyReg(sptr) &&
+        !IsAccount(sptr))
+      ClearMsgOnlyReg(sptr);
+    if (!FlagHas(&setflags, FLAG_NOCHAN) && IsNoChan(sptr) &&
+        !IsAccount(sptr))
+      ClearNoChan(sptr);
+    if (!FlagHas(&setflags, FLAG_VIEWHIDDENHOST) && IsViewHiddenHost(sptr) &&
+        !HasPriv(sptr, PRIV_HIDDEN_VIEWER))
+      ClearViewHiddenHost(sptr);
     if (!FlagHas(&setflags, FLAG_SSL) && IsSSL(sptr))
       ClearSSL(sptr);
     if (FlagHas(&setflags, FLAG_SSL) && !IsSSL(sptr))
       SetSSL(sptr);
-    /*
-     * new umode; servers can set it, local users cannot;
-     * prevents users from /kick'ing or /mode -o'ing
-     */
-    if (!FlagHas(&setflags, FLAG_CHSERV))
+    if (!FlagHas(&setflags, FLAG_NOIDLE) && IsNoIdle(sptr) &&
+        !HasPriv(sptr, PRIV_HIDE_IDLE))
+      ClearNoIdle(sptr);
+    if (!FlagHas(&setflags, FLAG_WHOIS_NOTICE) && IsWhoisNotice(sptr) &&
+        !HasPriv(sptr, PRIV_WHOIS_NOTICE))
+      ClearWhoisNotice(sptr);
+    if (!FlagHas(&setflags, FLAG_CHSERV) && IsChannelService(sptr) &&
+        !HasPriv(sptr, PRIV_CHANSERV))
       ClearChannelService(sptr);
     /*
      * only send wallops to opers

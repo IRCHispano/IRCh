@@ -220,8 +220,24 @@ void do_who(struct Client* sptr, struct Client* acptr, struct Channel* repchan,
       *(p1++) = 'b';
     if (HasHiddenHost(acptr))
       *(p1++) = 'x';
+    if (IsMsgOnlyReg(acptr))
+      *(p1++) = 'R';
+    if (IsStripColour(acptr))
+      *(p1++) = 'c';
+    if (IsNoChan(acptr))
+      *(p1++) = 'n';
+    if (IsViewHiddenHost(acptr))
+      *(p1++) = 'X';
     if (IsSSL(acptr))
       *(p1++) = 'z';
+    if (IsAnOper(sptr))
+    {
+      if (IsNoIdle(acptr))
+        *(p1++) = 'I';
+      if (IsWhoisNotice(acptr) && (sptr == acptr
+         || IsCoder(sptr) || IsAdmin(sptr)))
+        *(p1++) = 'W';
+    }
   }
 
   if (!fields || (fields & WHO_FIELD_DIS))

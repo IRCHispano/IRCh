@@ -383,6 +383,11 @@ void relay_private_message(struct Client* sptr, const char* name, const char* te
       is_silenced(sptr, acptr))
     return;
 
+  if (IsMsgOnlyReg(acptr) && !IsAccount(sptr) && !IsAnOper(sptr)) {
+    send_reply(sptr, ERR_NONONREG, cli_name(acptr));
+    return;
+  }
+
   /*
    * send away message if user away
    */
@@ -414,10 +419,14 @@ void relay_private_notice(struct Client* sptr, const char* name, const char* tex
 
   if (0 == (acptr = FindUser(name)))
     return;
-  if ((!IsChannelService(acptr) && 
+  if ((!IsChannelService(acptr) &&
        check_target_limit(sptr, acptr, cli_name(acptr), 0)) ||
       is_silenced(sptr, acptr))
     return;
+
+  if (IsMsgOnlyReg(acptr) && !IsAccount(sptr) && !IsAnOper(sptr))
+    return;
+
   /*
    * deliver the message
    */

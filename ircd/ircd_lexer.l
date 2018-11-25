@@ -117,6 +117,7 @@ static struct lexer_token {
   { "b", BYTES },
   { "badchan", TPRIV_BADCHAN },
   { "chan_limit", TPRIV_CHAN_LIMIT },
+  { "chanserv", TPRIV_CHANSERV },
   { "deop_lchan", TPRIV_DEOP_LCHAN },
   { "die", TPRIV_DIE },
   { "display", TPRIV_DISPLAY },
@@ -126,6 +127,8 @@ static struct lexer_token {
   { "gb", GBYTES },
   { "gigabytes", GBYTES },
   { "gline", TPRIV_GLINE },
+  { "hide_idle", TPRIV_HIDE_IDLE },
+  { "hidden_viewer", TPRIV_HIDDEN_VIEWER },
   { "ipv4", TOK_IPV4 },
   { "ipv6", TOK_IPV6 },
   { "kb", KBYTES },
@@ -157,6 +160,7 @@ static struct lexer_token {
   { "unlimit_query", TPRIV_UNLIMIT_QUERY },
   { "walk_lchan", TPRIV_WALK_LCHAN },
   { "wide_gline", TPRIV_WIDE_GLINE },
+  { "whois_notice", TPRIV_WHOIS_NOTICE },
   { "whox", TPRIV_WHOX },
   { NULL, 0 }
 };
