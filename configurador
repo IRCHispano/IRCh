@@ -1,0 +1,385 @@
+#!/bin/sh
+#
+# Configuration script for IRCh.
+#
+# IRC-Hispano IRC Daemon, configurador
+#
+# Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
+# Copyright (C) 1996-1998 Andy Church <achurch@dragonfire.net>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+###########################################################################
+
+# Nifty handy functions.
+
+echo2 () {
+	$ECHO2 "$*$ECHO2SUF"	# these are defined later
+}
+
+run () {
+        echo >&3 "$MODE: >>> $*"
+        ($*) >&3 2>&3 </dev/null
+        xxres=$?
+        if [ $xxres -ne 0 ] ; then
+                echo >&3 "$MODE: *** Command failed (exit code $xxres)"
+        fi
+        return $xxres
+}
+
+exists () {			# because some shells don't have test -e
+	if [ -f $1 -o -d $1 -o -p $1 -o -c $1 -o -b $1 ] ; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+###########################################################################
+
+# Variable initialization.
+
+BINDEST=/usr/local/sbin
+SYSCONFDEST=/etc/ircdh
+DATDEST=/usr/local/lib/ircdh
+SAMEDIR=0
+BINSL=ircd
+HISTORICBIN=0
+TEST_MAXCON=`ulimit -n`
+MAXCON=$((TEST_MAXCON-4))
+
+DDBTYPE="no default"
+ENVIRONMENT=
+DDBTYPE_DEF=
+USE_SSL=1
+USE_PCRE=1
+
+###########################################################################
+
+# How can we echo something without going to the next line?
+
+ECHO2SUF=''
+if [ "`echo -n a ; echo -n b`" = "ab" ] ; then
+	ECHO2='echo -n'
+elif [ "`echo 'a\c' ; echo 'b\c'`" = "ab" ] ; then
+	ECHO2='echo' ; ECHO2SUF='\c'
+elif [ "`printf 'a' 2>&1 ; printf 'b' 2>&1`" = "ab" ] ; then
+	ECHO2='printf "%s"'
+else
+	# oh well...
+	ECHO2='echo'
+fi
+export ECHO2 ECHO2SUF
+
+###########################################################################
+
+echo ""
+echo "Comezando configurador facil del Demonio de IRC de IRC-Hispano (IRCh)."
+echo ""
+
+###########################################################################
+
+# Ask the user anything we need to know ahead of time.
+
+export ok INPUT
+
+####
+
+if [ "$SAMEDIR" = 1 ] ; then
+        DEF=yes
+else
+        DEF=no
+fi
+ok=0
+echo "Desea instalar todo en el mismo directorio?"
+while [ $ok -eq 0 ] ; do
+        echo2 "[$DEF] "
+        if read INPUT ; then : ; else echo "" ; exit 1 ; fi
+        if [ ! "$INPUT" ] ; then
+                INPUT=$DEF
+        fi
+        case $INPUT in
+                n*|N*)
+                        SAMEDIR=0
+                        ok=1
+                        ;;
+                y*|Y*|s*|S*)
+                        SAMEDIR=1
+                        ok=1
+                        ;;
+        esac
+done
+echo ""
+
+####
+
+ok=0
+if [ $SAMEDIR -eq 1 ] ; then
+	echo "En que directorio quieres instalar los archivos?"
+else
+	echo "En que directorio quieres instalar los binarios?"
+fi
+echo "Pulsa Return para el valor por defecto, o introduce un nuevo valor."
+while [ $ok -eq 0 ] ; do
+	echo2 "[$BINDEST] "
+	if read INPUT ; then : ; else echo "" ; exit 1 ; fi
+	if [ ! "$INPUT" ] ; then
+		INPUT=$BINDEST
+	fi
+	if echo "$INPUT" | grep -q \[\'\"\\\] ; then
+		echo 'Por favor escribe una ruta sin los caracteres: '\'' " \'
+	elif [ ! "$NO_DIR_CHECK" -a ! -d "$INPUT" ] ; then
+		if exists "$INPUT" ; then
+			echo "$INPUT existe pero no es un directorio!"
+		else
+			ok=1
+		fi
+	elif exists "$INPUT/configure.ac" ; then
+		echo "No puedes usar el directorio del codigo fuente como directorio destino."
+	else
+		ok=1
+	fi
+done
+BINDEST=$INPUT
+echo ""
+
+####
+
+if [ $SAMEDIR -eq 0 ] ; then
+
+ok=0
+echo "En que directorio quieres instalar los archivos de configuracion?"
+echo "Pulsa Return para el valor por defecto, o introduce un nuevo valor."
+while [ $ok -eq 0 ] ; do
+        echo2 "[$SYSCONFDEST] "
+        if read INPUT ; then : ; else echo "" ; exit 1 ; fi
+        if [ ! "$INPUT" ] ; then
+                INPUT=$BINDEST
+        fi
+        if echo "$INPUT" | grep -q \[\'\"\\\] ; then
+                echo 'Por favor escribe una ruta sin los caracteres: '\'' " \'
+        elif [ ! "$NO_DIR_CHECK" -a ! -d "$INPUT" ] ; then
+                if exists "$INPUT" ; then
+                        echo "$INPUT existe pero no es un directorio!"
+                else
+                        ok=1
+                fi
+        elif exists "$INPUT/configure.ac" ; then
+                echo "No puedes usar el directorio del codigo fuente como directorio destino."
+        else
+                ok=1
+        fi
+done
+SYSCONFDEST=$INPUT
+echo ""
+
+fi
+
+####
+
+if [ $SAMEDIR -eq 0 ] ; then
+
+ok=0
+echo "Donde quieres instalar los archivos de datos?"
+while [ $ok -eq 0 ] ; do
+	echo2 "[$DATDEST] "
+	if read INPUT ; then : ; else echo "" ; exit 1 ; fi
+	if [ ! "$INPUT" ] ; then
+		INPUT=$DATDEST
+	fi
+	if echo "$INPUT" | grep -q \[\'\"\\\] ; then
+		echo 'Por favor escribe una ruta sin los caracteres: '\'' " \'
+	elif [ ! "$NO_DIR_CHECK" -a ! -d "$INPUT" ] ; then
+		if exists "$INPUT" ; then
+			echo "$INPUT existe pero no es un directorio!"
+		else
+			ok=1
+		fi
+	elif exists "$INPUT/configure.ac" ; then
+		echo "No puedes usar el directorio del codigo fuente como directorio destino."
+	else
+		ok=1
+	fi
+done
+DATDEST=$INPUT
+echo ""
+
+fi
+
+####
+
+ok=0
+echo "Maximo numero de conexiones que acepta el daemon"
+while [ $ok -eq 0 ] ; do
+	echo2 "[$MAXCON] "
+	if read INPUT ; then : ; else echo "" ; exit 1 ; fi
+	if [ ! "$INPUT" ] ; then
+		INPUT=$MAXCON
+	fi
+	if [ `echo "$INPUT" | grep -c '[^0-9]'` -gt 0 ] ; then
+		echo "$MAXCON no es un numero valido!"
+	else
+		ok=1
+	fi
+done
+MAXCON=$INPUT
+echo ""
+
+####
+
+ok=0
+echo "Cual de las versiones de DDB quieres utilizarlo en tu red de IRC?"
+echo ""
+echo "     1) DDB nativa"
+echo "     2) DDB nativa con persistencia en memoria (EN DESARROLLO)"
+echo "     3) DDB con sqllite (EN DESARROLLO)"
+echo "     9) No quiero usar DDB"
+
+while [ $ok -eq 0 ] ; do
+	echo2 "[$DDBTYPE] "
+	if read INPUT ; then : ; else echo "" ; exit 1 ; fi
+	if [ ! "$INPUT" ] ; then
+		INPUT=$DDBTYPE
+	fi
+	case $INPUT in
+		no\ default)
+			echo "Debes especificar el tipo de red IRC para que funcione correctamente."
+			;;
+		1)
+			ENVIRONMENT="--with-ddb-environment"
+			DDBTYPE_DEF=""
+			ok=1
+			;;
+#		2)
+#			ENVIRONMENT="--with-ddb-environment"
+#			DDBTYPE_DEF="--enable-ddb-persistent"
+#			ok=1
+#			;;
+#               3)
+#			ENVIRONMENT="--with-ddb-environment"
+#                       DDBTYPE_DEF="--enable-ddb-sqlite"
+#                       ok=1
+#                       ;;
+		9)
+			ENVIRONMENT="--with-undernet-environment"
+			DDB="--disable-ddb"
+			ok=1
+			;;
+		*)
+			echo "Por favor teclea la opcion correcta."
+			;;
+	esac
+done
+DDBTYPE=$INPUT
+echo ""
+
+####
+
+if [ "$USE_SSL" = 1 ] ; then
+        DEF=yes
+else
+        DEF=no
+fi
+
+ok=0
+echo "Desea activar el soporte SSL?"
+echo "Con SSL activado, se requiere certificado para arrancar el daemon"
+while [ $ok -eq 0 ] ; do
+        echo2 "[$DEF] "
+        if read INPUT ; then : ; else echo "" ; exit 1 ; fi
+        if [ ! "$INPUT" ] ; then
+                INPUT=$DEF
+        fi
+        case $INPUT in
+                n*|N*)
+                        USE_SSL="--disable-ssl"
+                        ok=1
+                        ;;
+                y*|Y*|s*|S*)
+                        USE_SSL=""
+                        ok=1
+                        ;;
+                *)
+                        echo 'Por favor teclea "si" o "no".'
+                        ;;
+        esac
+done
+echo ""
+
+
+####
+
+if [ "$USE_PCRE" = 1 ] ; then
+        DEF=yes
+else
+        DEF=no
+fi
+
+ok=0
+echo "Desea activar el soporte PCRE?"
+echo "Si quieres usar REGEX en Glines y en el Filtro de Spam, escribe Y"
+while [ $ok -eq 0 ] ; do
+        echo2 "[$DEF] "
+        if read INPUT ; then : ; else echo "" ; exit 1 ; fi
+        if [ ! "$INPUT" ] ; then
+                INPUT=$DEF
+        fi
+        case $INPUT in
+                n*|N*)
+                        USE_PCRE="--disable-pcre"
+                        ok=1
+                        ;;
+                y*|Y*|s*|S*)
+                        USE_PCRE=""
+                        ok=1
+                        ;;
+                *)
+                        echo 'Por favor teclea "si" o "no".'
+                        ;;
+        esac
+done
+echo ""
+
+####
+
+echo "Fin del configurador interactivo."
+echo ""
+
+###########################################################################
+
+if exists "configure" ; then
+	echo "El configure existe, seguimos."
+else
+	echo "El configure no existe, generando..."
+	./autogen.sh
+fi
+
+echo "Ejecutando configure..."
+RPRE="--prefix=$BINDEST"
+RBIN="--bindir=$BINDEST"
+
+if [ $SAMEDIR -eq 1 ] ; then
+RSYS="--sysconfdir=$BINDEST"
+RDAT="--datadir=$BINDEST"
+else
+RSYS="--sysconfdir=$SYSCONFDEST"
+RDAT="--datadir=$DATDEST"
+fi
+
+./configure "$RPRE" "$RBIN" "$RSYS" "$RDAT" "--with-maxcon=$MAXCON" "$ENVIRONMENT" "$DDBTYPE_DEF" "$USE_SSL" "$USE_PCRE"
+
+echo "Fin del configurador facil, escriba make para continuar..."
+
+exit 0
