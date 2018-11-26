@@ -226,6 +226,8 @@ void do_who(struct Client* sptr, struct Client* acptr, struct Channel* repchan,
       *(p1++) = 'c';
     if (IsNoChan(acptr))
       *(p1++) = 'n';
+    if (IsCommonChansOnly(acptr))
+      *(p1++) = 'q';
     if (IsViewHiddenHost(acptr))
       *(p1++) = 'X';
     if (IsSSL(acptr))

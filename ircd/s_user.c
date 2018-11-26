@@ -534,6 +534,7 @@ static const struct UserMode {
   { FLAG_MSGONLYREG,  'R' },
   { FLAG_STRIPCOLOUR, 'c' },
   { FLAG_NOCHAN,      'n' },
+  { FLAG_COMMONCHANSONLY, 'q' },
   { FLAG_VIEWHIDDENHOST, 'X' },
   { FLAG_SSL,         'z' },
   { FLAG_NOIDLE,      'I' },
@@ -850,7 +851,7 @@ int whisper(struct Client* source, const char* nick, const char* channel,
   }
   if (is_silenced(source, dest))
     return 0;
-          
+
   if (is_notice)
     sendcmdto_one(source, CMD_NOTICE, dest, "%C :%s", dest, text);
   else
@@ -1184,6 +1185,12 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
         else
           ClearNoChan(sptr);
         break;
+      case 'q':
+        if (what == MODE_ADD)
+          SetCommonChansOnly(sptr);
+        else
+          ClearCommonChansOnly(sptr);
+        break;
       case 'X':
         if (what == MODE_ADD)
           SetViewHiddenHost(sptr);
@@ -1251,6 +1258,9 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
     if (!FlagHas(&setflags, FLAG_NOCHAN) && IsNoChan(sptr) &&
         !IsAccount(sptr))
       ClearNoChan(sptr);
+    if (!FlagHas(&setflags, FLAG_COMMONCHANSONLY) && IsCommonChansOnly(sptr) &&
+        !IsAccount(sptr))
+      ClearCommonChansOnly(sptr);
     if (!FlagHas(&setflags, FLAG_VIEWHIDDENHOST) && IsViewHiddenHost(sptr) &&
         !HasPriv(sptr, PRIV_HIDDEN_VIEWER))
       ClearViewHiddenHost(sptr);

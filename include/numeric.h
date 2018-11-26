@@ -423,6 +423,7 @@ extern const struct Numeric* get_error_numeric(int err);
 /*      ERR_UNIQOPRIVSNEEDED 485           IRCnet extension */
 /*	ERR_KILLDENY         485	   unreal */
 /*	ERR_CANTKICKADMIN    485	   PTlink */
+#define ERR_COMMONCHANSONLY  485	/* Nefarious extension */
 #define ERR_NONONREG         486        /* IRC-Hispano extension */
 /*	ERR_HTMDISABLED      486	   unreal */
 /*      ERR_CHANTOORECENT    487           IRCnet extension (?) */

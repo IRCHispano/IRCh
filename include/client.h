@@ -97,7 +97,7 @@ typedef unsigned long flagpage_t;
 #define FlagClr(set,flag) ((set)->bits[FLAGSET_INDEX(flag)] &= ~FLAGSET_MASK(flag))
 
 /** String containing valid user modes, in no particular order. */
-#define infousermodes "diOoswkgxrSaChBbRcnXzIW"
+#define infousermodes "diOoswkgxrSaChBbRcnqXzIW"
 
 /** Operator privileges. */
 enum Priv
@@ -186,6 +186,8 @@ enum Flag
     FLAG_MSGONLYREG,                /**< +R only privmsg/notices from +r */
     FLAG_STRIPCOLOUR,               /**< +c user cannot received colours messages */
     FLAG_NOCHAN,                    /**< +n user's channels are hidden */
+    FLAG_COMMONCHANSONLY,           /**< +q: hide privmsgs/notices if in no
+                                         common channels (with +ok exceptions) */
     FLAG_VIEWHIDDENHOST,            /**< +X can view hiddenhost */
     FLAG_SSL,                       /**< +z User is connected via SSL */
     FLAG_NOIDLE,                    /**< +I hide idle time */
@@ -663,6 +665,8 @@ struct Client {
 #define IsMsgOnlyReg(x)         HasFlag(x, FLAG_MSGONLYREG)
 /** Return non-zero if the client has set mode +c (strip colour). */
 #define IsStripColour(x)        HasFlag(x, FLAG_STRIPCOLOUR)
+/** Return non-zero if the client has set mode +q (common chans only). */
+#define IsCommonChansOnly(x)    HasFlag(x, FLAG_COMMONCHANSONLY)
 /** Return non-zero if the client has set mode +X (can view hidden host). */
 #define IsViewHiddenHost(x)     HasFlag(x, FLAG_VIEWHIDDENHOST)
 /** Return non-zero if the client is connected via SSL. */
@@ -733,6 +737,8 @@ struct Client {
 #define SetStripColour(x)       SetFlag(x, FLAG_STRIPCOLOUR)
 /** Mark a client as having mode +n (channel hiding). */
 #define SetNoChan(x)            SetFlag(x, FLAG_NOCHAN)
+/** Mark a client as having mode +q (common chans only). */
+#define SetCommonChansOnly(x)   SetFlag(x, FLAG_COMMONCHANSONLY)
 /** Mark a client as having mode +X (can view hidden host). */
 #define SetViewHiddenHost(x)    SetFlag(x, FLAG_VIEWHIDDENHOST)
 /** Mark a client as having connected via SSL. */
@@ -800,6 +806,8 @@ struct Client {
 #define ClearMsgOnlyReg(x)      ClrFlag(x, FLAG_MSGONLYREG)
 /** Remove mode +c (strip colour) from the client. */
 #define ClearStripColour(x)     ClrFlag(x, FLAG_STRIPCOLOUR)
+/** Remove mode +q (common chans only) from the client */
+#define ClearCommonChansOnly(x) ClrFlag(x, FLAG_COMMONCHANSONLY)
 /** Remove mode +X (can view hidden host) from the client. */
 #define ClearViewHiddenHost(x)  ClrFlag(x, FLAG_VIEWHIDDENHOST)
 /** Client is no longer connected via SSL (this cannot be possible). */
