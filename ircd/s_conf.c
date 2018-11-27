@@ -87,6 +87,8 @@ struct LocalConf   localConf;
 struct CRuleConf*  cruleConfList;
 /** Global list of K-lines. */
 struct DenyConf*   denyConfList;
+/** Global list of E-lines. */
+struct ExceptConf* exceptConfList;
 
 /** Tell a user that they are banned, dumping the message from a file.
  * @param sptr Client being rejected
@@ -785,6 +787,29 @@ const struct DenyConf* conf_get_deny_list(void)
   return denyConfList;
 }
 
+/** Free all except rules from #exceptConfList. */
+static void conf_erase_except_list(void)
+{
+ struct ExceptConf* next;
+ struct ExceptConf* p = exceptConfList;
+ for ( ; p; p = next) {
+   next = p->next;
+   MyFree(p->hostmask);
+   MyFree(p->usermask);
+   MyFree(p->password);
+   MyFree(p);
+ }
+ exceptConfList = 0;
+}
+
+/** Return #exceptConfList.
+* @return #exceptConfList
+*/
+const struct ExceptConf* conf_get_except_list(void)
+{
+ return exceptConfList;
+}
+
 /** Find any existing quarantine for the named channel.
  * @param chname Channel name to search for.
  * @return Reason for channel's quarantine, or NULL if none exists.
@@ -978,6 +1003,7 @@ int rehash(struct Client *cptr, int sig)
   }
   conf_erase_crule_list();
   conf_erase_deny_list();
+  conf_erase_except_list();
   motd_clear();
 
   /*
@@ -1108,6 +1134,12 @@ int find_kill(struct Client *cptr)
   assert((name ? strlen(name) : 0) <= HOSTLEN);
   assert((realname ? strlen(realname) : 0) <= REALLEN);
 
+  /*
+   * If have an exception, skip the check.
+   */
+  if (find_exception(cptr))
+    return 0;
+
   /* 2000-07-14: Rewrote this loop for massive speed increases.
    *             -- Isomer
    */
@@ -1144,6 +1176,47 @@ int find_kill(struct Client *cptr)
   }
 
   return 0;
+}
+
+/** Searches for a E-line for a client.
+* @param cptr Client to search for.
+* @return 1 if found; 0 not found.
+*/
+int find_exception(struct Client *cptr)
+{
+ const char*      host;
+ const char*      name;
+ const char*      password;
+ struct ExceptConf* except;
+
+ assert(0 != cptr);
+
+ if (!cli_user(cptr))
+   return 0;
+
+ host = cli_sockhost(cptr);
+ name = cli_user(cptr)->username;
+ password = cli_passwd(cptr);
+
+ assert(strlen(host) <= HOSTLEN);
+ assert((name ? strlen(name) : 0) <= HOSTLEN);
+ assert((password ? strlen(password) : 0) <= PASSWDLEN);
+
+ for (except = exceptConfList; except; except = except->next) {
+   if (except->usermask && match(except->usermask, name))
+     continue;
+   if (except->password && match(except->password, password))
+     continue;
+   if (except->bits > 0) {
+     if (!ipmask_check(&cli_ip(cptr), &except->address, except->bits))
+       continue;
+   } else if (except->hostmask && match(except->hostmask, host))
+     continue;
+
+   return 1;
+ }
+
+ return 0;
 }
 
 /** Attempt to attach Client blocks to \a cptr.  If attach_iline()

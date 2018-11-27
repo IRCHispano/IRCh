@@ -131,6 +131,17 @@ struct DenyConf {
 
 #define DENY_FLAGS_FILE     0x0001 /**< Comment is a filename */
 
+/** Local E-line structure. */
+struct ExceptConf {
+ struct ExceptConf*  next;     /**< Next ExceptConf in #denyConfList. */
+ char*               hostmask; /**< Mask for  IP or hostname. */
+ char*               usermask; /**< Mask for client's username. */
+ char*               password; /**< Password for exception. */
+ struct irc_in_addr  address;  /**< Address for IP-based excepts. */
+ unsigned char       bits;     /**< Number of bits for ipexcepts */
+ int                 port;     /**< Number for port */
+};
+
 /** Local server configuration. */
 struct LocalConf {
   char*          name;        /**< Name of server. */
@@ -205,6 +216,7 @@ extern int init_conf(void);
 extern const struct LocalConf* conf_get_local(void);
 extern const struct CRuleConf* conf_get_crule_list(void);
 extern const struct DenyConf*  conf_get_deny_list(void);
+extern const struct ExceptConf* conf_get_except_list(void);
 
 extern const char* conf_eval_crule(const char* name, int mask);
 
@@ -220,6 +232,7 @@ extern enum AuthorizationCheckResult conf_check_client(struct Client *cptr);
 extern int  conf_check_server(struct Client *cptr);
 extern int rehash(struct Client *cptr, int sig);
 extern int find_kill(struct Client *cptr);
+extern int find_exception(struct Client *cptr);
 extern const char *find_quarantine(const char* chname);
 extern const struct wline *find_webirc(const struct irc_in_addr *addr, const char *passwd);
 extern void lookup_confhost(struct ConfItem *aconf);

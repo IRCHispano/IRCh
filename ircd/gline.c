@@ -240,6 +240,10 @@ do_gline(struct Client *cptr, struct Client *sptr, struct Gline *gline)
         }
       }
 
+      /* Check if G:Lined user matches an E:Line */
+      if (find_exception(acptr))
+        continue;
+
       /* ok, here's one that got G-lined */
       send_reply(acptr, SND_EXPLICIT | ERR_YOUREBANNEDCREEP, ":%s",
       	   gline->gl_reason);

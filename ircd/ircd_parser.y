@@ -65,6 +65,7 @@
 
   extern struct LocalConf   localConf;
   extern struct DenyConf*   denyConfList;
+  extern struct ExceptConf* exceptConfList;
   extern struct CRuleConf*  cruleConfList;
   extern struct ServerConf* serverConfList;
   extern struct s_map*      GlobalServiceMapList;
@@ -81,6 +82,7 @@
   struct ListenerFlags listen_flags;
   struct ConnectionClass *c_class;
   struct DenyConf *dconf;
+  struct ExceptConf *econf;
   struct ServerConf *sconf;
   struct s_map *smap;
   struct Privs privs;
@@ -159,6 +161,7 @@ static void free_slist(struct SLink **link) {
 %token DESCRIPTION
 %token CLIENT
 %token KILL
+%token EXCEPT
 %token CRULE
 %token REAL
 %token REASON
@@ -209,7 +212,7 @@ static void free_slist(struct SLink **link) {
 blocks: blocks block | block;
 block: adminblock | generalblock | classblock | connectblock |
        uworldblock | operblock | portblock | jupeblock | clientblock |
-       killblock | cruleblock | motdblock | featuresblock | quarantineblock |
+       killblock | exceptblock | cruleblock | motdblock | featuresblock | quarantineblock |
        pseudoblock | iauthblock | webircblock | error ';';
 
 /* The timespec, sizespec and expr was ripped straight from
@@ -1030,6 +1033,64 @@ killreasonfile: TFILE '=' QSTRING ';'
  dconf->flags |= DENY_FLAGS_FILE;
  MyFree(dconf->message);
  dconf->message = $3;
+};
+
+exceptblock: EXCEPT
+{
+  econf = (struct ExceptConf*) MyCalloc(1, sizeof(*econf));
+} '{' exceptitems '}' ';'
+{
+  if (econf->usermask || econf->hostmask || econf->password)
+  {
+    econf->next = exceptConfList;
+    exceptConfList = econf;
+  }
+  else
+  {
+    MyFree(econf->usermask);
+    MyFree(econf->hostmask);
+    MyFree(econf->password);
+    MyFree(econf);
+    parse_error("Eline block must match on at least one of username, host or password");
+  }
+  econf = NULL;
+};
+exceptitems: exceptitem exceptitems | exceptitem;
+exceptitem: exceptuhost | exceptpassword | exceptusername | exceptport;
+exceptuhost: HOST '=' QSTRING ';'
+{
+  char *h;
+  MyFree(econf->hostmask);
+  MyFree(econf->usermask);
+  if ((h = strchr($3, '@')) == NULL)
+  {
+    DupString(econf->usermask, "*");
+    econf->hostmask = $3;
+  }
+  else
+  {
+    *h++ = '\0';
+    DupString(econf->hostmask, h);
+    econf->usermask = $3;
+  }
+  ipmask_parse(econf->hostmask, &econf->address, &econf->bits);
+};
+
+exceptusername: USERNAME '=' QSTRING ';'
+{
+  MyFree(econf->usermask);
+  econf->usermask = $3;
+};
+
+exceptpassword: PASS '=' QSTRING ';'
+{
+ MyFree(econf->password);
+ econf->password = $3;
+};
+
+exceptport: PORT '=' NUMBER ';'
+{
+ econf->port = $3;
 };
 
 cruleblock: CRULE

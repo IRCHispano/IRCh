@@ -283,6 +283,87 @@ stats_klines(struct Client *sptr, const struct StatDesc *sd, char *mask)
   }
 }
 
+/** Report ExceptConf entries.
+ * @param[in] to Client requesting list.
+ */
+static void
+report_except_list(struct Client* to)
+{
+  const struct ExceptConf* p = conf_get_except_list();
+
+  for ( ; p; p = p->next)
+    send_reply(to, RPL_STATSELINE,
+               p->usermask ? p->usermask : "*",
+               p->hostmask ? p->hostmask : "*");
+}
+
+/** Report E-lines to a user.
+ * @param[in] sptr Client requesting statistics.
+ * @param[in] sd Stats descriptor for request (ignored).
+ * @param[in] mask Filter for hostmasks to show.
+ */
+static void
+stats_elines(struct Client *sptr, const struct StatDesc *sd, char *mask)
+{
+  int wilds = 0;
+  int count = 3;
+  int limit_query = 0;
+  char *user  = 0;
+  char *host;
+  const struct ExceptConf* conf;
+
+  if (!IsAnOper(sptr))
+    limit_query = 1;
+
+  if (!mask)
+  {
+    if (limit_query)
+      need_more_params(sptr, "STATS E");
+    else
+      report_except_list(sptr);
+    return;
+  }
+
+  if (!limit_query)
+  {
+    wilds = string_has_wildcards(mask);
+    count = 1000;
+  }
+  if ((host = strchr(mask, '@')))
+  {
+    user = mask;
+    *host++ = '\0';
+  }
+  else
+    host = mask;
+
+  for (conf = conf_get_except_list(); conf; conf = conf->next)
+  {
+    /* Skip this block if the user is searching for a user-matching
+     * mask but the current Except doesn't have a usermask, or if user
+     * is searching for a host-matching mask but the Except has no
+     * hostmask, or if the user mask is specified and doesn't match,
+     * or if the host mask is specified and doesn't match.
+     */
+    if ((user && !conf->usermask)
+        || (host && !conf->hostmask)
+        || (user && conf->usermask
+            && (wilds
+                ? mmatch(user, conf->usermask)
+                : match(conf->usermask, user)))
+        || (host && conf->hostmask
+            && (wilds
+                ? mmatch(host, conf->hostmask)
+                : match(conf->hostmask, host))))
+      continue;
+    send_reply(sptr, RPL_STATSELINE,
+               conf->usermask ? conf->usermask : "*",
+               conf->hostmask ? conf->hostmask : "*");
+    if (--count == 0)
+      return;
+  }
+}
+
 /** Report on servers and/or clients connected to the network.
  * @param[in] sptr Client requesting statistics.
  * @param[in] sd Stats descriptor for request (ignored).
@@ -569,6 +650,9 @@ struct StatDesc statsinfo[] = {
   { 'e', "engine", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_e,
     stats_engine, 0,
     "Report server event loop engine." },
+  { 'E', "elines", (STAT_FLAG_OPERFEAT | STAT_FLAG_VARPARAM | STAT_FLAG_CASESENS), FEAT_HIS_STATS_E,
+    stats_elines, 0,
+    "Exceptions (E-Lines)." },
   { 'f', "features", (STAT_FLAG_OPERFEAT | STAT_FLAG_CASESENS), FEAT_HIS_STATS_f,
     feature_report, 0,
     "Feature settings." },
