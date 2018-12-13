@@ -22,15 +22,12 @@
 #        ChangeLog ChangeLog.es COPYING COPYING.es RELEASE.NOTES RELEASE.NOTES.es \
 #        TODO TODO.es
 
-# Install man page and example.conf
-#sysconf_DATA = doc/ircd.sample-en.conf doc/ircd.sample-es.conf
-
 EXTRA_DIST = doc patches tools include Doxyfile INSTALL_FR ircd-patch \
 	ChangeLog.11 ChangeLog.12 LICENSE RELEASE.NOTES
 
 # Install man page and example.conf
 #man_MANS = doc/ircd.8
-sysconf_DATA = doc/example.conf
+sysconf_DATA = doc/example.conf doc/ejemplo.conf
 
 include ircd/subdir.am
 include ircd/test/subdir.am
