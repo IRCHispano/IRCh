@@ -50,6 +50,7 @@ enum Feature {
   FEAT_HUB,
   FEAT_WALLOPS_OPER_ONLY,
   FEAT_NODNS,
+  FEAT_NOIDENT,
   FEAT_RANDOM_SEED,
   FEAT_DEFAULT_LIST_PARAM,
   FEAT_NICKNAMEHISTORYLENGTH,
@@ -92,6 +93,9 @@ enum Feature {
   FEAT_MPATH,
   FEAT_RPATH,
   FEAT_PPATH,
+#if defined(DDB)
+  FEAT_DDBPATH,
+#endif
 
   /* Networking features */
   FEAT_TOS_SERVER,
