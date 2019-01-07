@@ -155,6 +155,9 @@ static struct LogDesc {
   S(JUPE, -1, SNO_NETWORK),
   S(WHO, -1, 0),
   S(NETWORK, -1, SNO_NETWORK),
+#if defined(DDB)
+  S(DDB, -1, SNO_NETWORK),
+#endif
   S(OPERKILL, -1, 0),
   S(SERVKILL, -1, 0),
   S(USER, -1, 0),

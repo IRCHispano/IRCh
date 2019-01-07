@@ -137,6 +137,7 @@ enum Priv
     PRIV_HIDDEN_VIEWER, /**< oper can set/unset user mode +X */
     PRIV_WHOIS_NOTICE, /**< oper can set/unset user mode +W */
     PRIV_HIDE_IDLE, /**< oper can set/unset user mode +I */
+    PRIV_DBQ,
     PRIV_LAST_PRIV /**< number of privileges */
   };
 

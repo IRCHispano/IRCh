@@ -30,6 +30,7 @@
 #include "client.h"
 #include "crule.h"
 #include "destruct_event.h"
+#include "ddb.h"
 #include "hash.h"
 #include "ircd_alloc.h"
 #include "ircd_events.h"
@@ -766,6 +767,10 @@ int main(int argc, char **argv) {
 
   write_pidfile();
   init_counters();
+
+#if defined(DDB)
+  ddb_init();
+#endif
 
   Debug((DEBUG_NOTICE, "Server ready..."));
   log_write(LS_SYSTEM, L_NOTICE, 0, "Server Ready");

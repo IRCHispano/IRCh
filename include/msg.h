@@ -386,6 +386,13 @@ struct Client;
 #define TOK_FINGERPRINT         "FP"
 #define CMD_FINGERPRINT         MSG_FINGERPRINT, TOK_FINGERPRINT
 
+#define MSG_DB                  "DB"            /* DB */
+#define TOK_DB                  "DB"
+#define CMD_DB                  MSG_DB, TOK_DB
+
+#define MSG_DBQ                 "DBQ"           /* DBQ */
+#define TOK_DBQ                 "DBQ"
+#define CMD_DBQ                 MSG_DBQ, TOK_DBQ
 /*
  * Constants
  */

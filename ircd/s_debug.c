@@ -28,6 +28,7 @@
 #include "channel.h"
 #include "class.h"
 #include "client.h"
+#include "ddb.h"
 #include "gline.h"
 #include "hash.h"
 #include "ircd_alloc.h"
@@ -249,6 +250,10 @@ void count_memory(struct Client *cptr, const struct StatDesc *sd,
       awm = 0,                  /* memory used by aways */
       wwam = 0,                 /* whowas away memory used */
       wwm = 0,                  /* whowas array memory used */
+#if defined(DDB)
+      dbs = 0,                  /* keys of database */
+      dbm = 0,                  /* memory used by DDB */
+#endif
       mtm = 0,                  /* memory used by monitor entrys */
       glm = 0,                  /* memory used by glines */
       jum = 0,                  /* memory used by jupes */
@@ -370,6 +375,12 @@ void count_memory(struct Client *cptr, const struct StatDesc *sd,
   count_listener_memory(&listeners, &listenersm);
   send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
              ":Listeners allocated %d(%zu)", listeners, listenersm);
+
+#if defined(DDB)
+  ddb_count_memory(&dbs, &dbm);
+  send_reply(cptr, SND_EXPLICIT | RPL_STATSDEBUG,
+             ":DDB keys allocated %d(%zu)", dbs, dbm);
+#endif
   /*
    * NOTE: this count will be accurate only for the exact instant that this
    * message is being sent, so the count is affected by the dbufs that

@@ -24,6 +24,7 @@
  */
 #include "config.h"
 
+#include "ddb.h"
 #include "ircd.h"
 #include "ircd_alloc.h"
 #include "ircd_events.h"
@@ -52,6 +53,7 @@ static struct tag_SignalCounter {
   unsigned int hup;  /**< Received SIGHUP count. */
   unsigned int chld; /**< Received SIGCHLD count. */
   unsigned int usr1; /**< Received SIGUSR1 count. */
+  unsigned int usr2; /**< Received SIGUSR2 count. */
 } SignalCounter;
 
 /** Event generator for SIGHUP. */
@@ -64,6 +66,8 @@ static struct Signal sig_term;
 static struct Signal sig_chld;
 /** Event generator for SIGUSR1. */
 static struct Signal sig_usr1;
+/** Event generator for SIGUSR2. */
+static struct Signal sig_usr2;
 /** List of active child process callback requests. */
 static struct ChildRecord *children;
 /** List of inactive (free) child records. */
@@ -122,6 +126,22 @@ static void sigusr1_callback(struct Event* ev)
   ++SignalCounter.usr1;
 #if defined(USE_SSL)
   ssl_reinit(1);
+#endif
+}
+
+/** Signal callback for SIGUSR2.
+ * @param[in] ev Signal event descriptor.
+ */
+static void sigusr2_callback(struct Event* ev)
+{
+  assert(0 != ev_signal(ev));
+  assert(ET_SIGNAL == ev_type(ev));
+  assert(SIGUSR1 == sig_signal(ev_signal(ev)));
+  assert(SIGUSR1 == ev_data(ev));
+
+  ++SignalCounter.usr2;
+#if defined(DDB)
+  ddb_reload();
 #endif
 }
 
@@ -268,6 +288,7 @@ void setup_signals(void)
   signal_add(&sig_term, sigterm_callback, 0, SIGTERM);
   signal_add(&sig_chld, sigchld_callback, 0, SIGCHLD);
   signal_add(&sig_usr1, sigusr1_callback, 0, SIGUSR1);
+  signal_add(&sig_usr2, sigusr2_callback, 0, SIGUSR2);
 
 #ifdef HAVE_RESTARTABLE_SYSCALLS
   /*

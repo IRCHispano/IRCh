@@ -183,6 +183,16 @@ ircd_ircd_SOURCES = \
 	ircd/userload.c \
 	ircd/whocmds.c \
 	ircd/whowas.c
+
+if ENVIRONMENT_DDB
+ircd_ircd_SOURCES += \
+	ircd/ddb.c \
+	ircd/ddb_db_native.c \
+	ircd/ddb_events.c \
+	ircd/ircd_tea.c \
+	ircd/m_db.c \
+	ircd/m_dbq.c
+endif
 	
 if ENGINE_POLL
 ircd_ircd_SOURCES += ircd/engine_poll.c

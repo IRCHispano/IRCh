@@ -25,6 +25,7 @@
 #include "config.h"
 
 #include "client.h"
+#include "ddb.h"
 #include "ircd.h"
 #include "ircd_log.h"
 #include "ircd_reply.h"
@@ -44,6 +45,7 @@
  * parv[1] = 'l' reopens the log files and returns
  * parv[1] = 'q' to not rehash the resolver (optional)
  * parv[1] = 's' to reload SSL certificates
+ * parv[1] = 'b' to reload DDB databases
  */
 int mo_rehash(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
@@ -65,6 +67,12 @@ int mo_rehash(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     } else if (*parv[1] == 's') {
       send_reply(sptr, SND_EXPLICIT | RPL_REHASHING, ":Reloading SSL certificates");
       ssl_reinit(0);
+      return 0;
+#endif
+#if defined(DDB)
+    } else if (*parv[1] == 'b') {
+      send_reply(sptr, SND_EXPLICIT | RPL_REHASHING, ":Reloading DDB databases");
+      ddb_reload();
       return 0;
 #endif
     } else if (*parv[1] == 'q')

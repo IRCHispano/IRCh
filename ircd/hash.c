@@ -548,3 +548,14 @@ void list_next_channels(struct Client *cptr)
     send_reply(cptr, RPL_LISTEND);
   }
 }
+
+#if defined(DDB)
+
+/** Calculates a hash of one key.
+ */
+int ddb_hash_register(char *key, int hash_size)
+{
+  return (unsigned int)(strhash(key) & (hash_size - 1));
+}
+
+#endif /* DDB */

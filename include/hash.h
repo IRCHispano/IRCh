@@ -102,4 +102,8 @@ extern void stats_nickjupes(struct Client* to, const struct StatDesc* sd,
 			    char* param);
 extern void list_next_channels(struct Client *cptr);
 
+#if defined(DDB)
+extern int ddb_hash_register(char *key, int hash_size);
+#endif
+
 #endif /* INCLUDED_hash_h */

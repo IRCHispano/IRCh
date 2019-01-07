@@ -28,6 +28,7 @@
  */
 #include "config.h"
 
+#include "ddb.h"
 #include "class.h"
 #include "client.h"
 #include "gline.h"
@@ -638,6 +639,11 @@ struct StatDesc statsinfo[] = {
   { 'a', "nameservers", STAT_FLAG_OPERFEAT|STAT_FLAG_LOCONLY, FEAT_HIS_STATS_a,
     report_dns_servers, 0,
     "DNS servers." },
+#if defined(DDB)
+  { 'b', "DDB", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_b,
+    ddb_report_stats, 0,
+    "Distributed DataBase statistics." },
+#endif
   { 'c', "connect", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_c,
     stats_configured_links, CONF_SERVER,
     "Remote server connection lines." },
@@ -647,7 +653,7 @@ struct StatDesc statsinfo[] = {
   { 'D', "crules", (STAT_FLAG_OPERFEAT | STAT_FLAG_CASESENS), FEAT_HIS_STATS_d,
     stats_crule_list, CRULE_ALL,
     "Dynamic routing configuration." },
-  { 'e', "engine", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_e,
+  { 'e', "engine", (STAT_FLAG_OPERFEAT | STAT_FLAG_CASESENS), FEAT_HIS_STATS_e,
     stats_engine, 0,
     "Report server event loop engine." },
   { 'E', "elines", (STAT_FLAG_OPERFEAT | STAT_FLAG_VARPARAM | STAT_FLAG_CASESENS), FEAT_HIS_STATS_E,

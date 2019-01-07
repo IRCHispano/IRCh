@@ -60,6 +60,9 @@ enum LogSys {
   LS_JUPE,       /**< Adding, (de-)activating or removing JUPEs. */
   LS_WHO,        /**< Use of extended WHO privileges. */
   LS_NETWORK,    /**< New server connections. */
+#if defined(DDB)
+  LS_DDB,        /**< Distributed DataBase errors and warnings */
+#endif
   LS_OPERKILL,   /**< Kills by IRC operators. */
   LS_SERVKILL,   /**< Kills by servers. */
   LS_USER,       /**< User exits. */
