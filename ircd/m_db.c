@@ -132,8 +132,45 @@ int ms_db(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       /* Drop */
       case 'D':
       {
-  /*TODO*/
+        if (!IsHub(cptr))
+          break;
 
+        mb = msgq_make(0, "%C " TOK_DB " %s 0 D %s %c", sptr,
+                       parv[1], parv[4], table);
+
+        /* Send the message to the rest of servers */
+        for (lp = cli_serv(&me)->down; lp; lp = lp->next)
+        {
+          if (lp->value.cptr == cptr)
+            continue;
+
+          cli_serv(lp->value.cptr)->ddb_open &= ~ddb_mask;
+
+          send_buffer(lp->value.cptr, mb, 0);  /* Send this message */
+        }
+        msgq_clean(mb);
+
+        /* For lastNNServer bug (find_match_server) it use collapse + match */
+        collapse(parv[1]);
+        /* If it is not for us, it ignored */
+        if (!match(parv[1], cli_name(&me)))
+        {
+          /* Drop the table on memory and disk */
+          ddb_drop(table);
+
+          /* Disconnect with all hubs except which it sends to us */
+          log_write(LS_DDB, L_INFO, 0, "DB Drop Table %c from %C", table, cptr);
+          ircd_snprintf(0, ddb_buf, sizeof(ddb_buf), "DB DROP Table %c from %C",
+                        table, cptr);
+          ddb_splithubs(cptr, table, ddb_buf);
+
+          /* Send the conformity response */
+          sendcmdto_one(&me, CMD_DB, cptr, "%s 0 E %s %c", cli_name(cptr),
+                        parv[4], table);
+        }
+        sendcmdto_one(&me, CMD_DB, cptr, "%s 0 J %lu %c", cli_name(cptr),
+                      ddb_id_table[table], table);
+        return 0;
         break;
       }
 
@@ -167,6 +204,19 @@ int ms_db(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
                       hash_lo, ddb_hashtable_lo[table], hash_hi, ddb_hashtable_hi[table]);
 
   /* TODO*/
+#if 0
+        if (!((hash_lo == ddb_hashtable_lo[table]) && (hash_hi == ddb_hashtable_hi[table])))
+        {
+          /* The HASH is incorrect, to erase */
+          log_write(LS_DDB, L_INFO, 0, "DB HASH Check failed, droping table %c", table);
+
+          /* Drop the table on memory and disk */
+          ddb_drop(table);
+
+          sendcmdto_one(&me, CMD_DB, cptr, "%s 0 J %u %c", cli_name(cptr),
+                        ddb_id_table[table], table);
+        }
+#endif
 
         break;
       }
@@ -175,8 +225,52 @@ int ms_db(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       case 'J':
       {
   /* TODO */
+        int end_burst;
 
-       break;
+        if (id >= ddb_id_table[table])
+        {
+          /* Individual registers*/
+          cli_serv(cptr)->ddb_open |= ddb_mask;
+          return 0;
+        }
+        else if ((cli_serv(cptr)->ddb_open) & ddb_mask)
+        {
+          /* Open faucet and old registers.
+           * It happens if the copy of cptr of the DDB
+           * is corrupt.
+           */
+          (cli_serv(cptr)->ddb_open) &= ~ddb_mask;
+
+          /* Drop your DDB */
+          sendcmdto_one(&me, CMD_DB, cptr, "%s 0 D DDB_CORRUPT %c",
+                        cli_name(cptr), table);
+
+          return 0;
+        }
+
+        /* In the burst of table, bursts become of 1000 registers, is send
+         * one in each JOIN request. This function gives back 1 if all the
+         * data is sent and 0 if still there are pending data.
+         * The automatic HASH verification is due to do to leafs, NEVER to
+         * HUBS, since if a HUB has the corrupt DB, all the network is down
+         * by wind with a massive erasure.
+         */
+        end_burst = ddb_db_read(cptr, table, (id + 1), 1000);
+        if (end_burst == 1)
+        {
+          cli_serv(cptr)->ddb_open |= ((unsigned int)1) << (table - DDB_INIT);
+          if (IsHub(cptr))
+            break;
+
+          inttobase64(ddb_buf, ddb_hashtable_hi[table], 6);
+          inttobase64(ddb_buf + 6, ddb_hashtable_lo[table], 6);
+
+          sendcmdto_one(&me, CMD_DB, cptr, "%s 0 H %s %c", cli_name(cptr), ddb_buf, table);
+        }
+        else if (end_burst == 0)
+          sendcmdto_one(&me, CMD_DB, cptr, "%s 0 B %u %c",
+                         cli_name(cptr), ddb_id_table[table], table);
+        return 0;
       }
 
       /* Hash Query command for verify from a service */
@@ -283,7 +377,7 @@ int ms_db(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   mb = msgq_make(sptr, "%C " TOK_DB " %s %lu %s %s", sptr,
                  parv[1], id, parv[3], parv[4]);
-  if (parc != 5)
+  if (parc > 5)
     msgq_append(sptr, mb, " :%s", parv[5]);
 
   /* Propagated to our child servers */
@@ -296,24 +390,11 @@ int ms_db(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     send_buffer(lp->value.cptr, mb, 0);  /* Send this message */
   }
   msgq_clean(mb);
-/*
-  if (parc == 5)
-    sprintf_irc(db_buf, "%u %s %s %s\n", db, parv[1], parv[3], parv[4]);
-  else
-    sprintf_irc(db_buf, "%u %s %s %s %s\n", db, parv[1], parv[3],
-        parv[4], parv[5]);
+
   if (strcmp(parv[4], "*"))
-  {
-    db_alta(db_buf, que_bdd, cptr, sptr);
-  }
+    ddb_new_register(cptr, table, id, parv[1], parv[4], (parc > 5 ? parv[5] : NULL));
   else
-  {                           
-    db_pack(db_buf, que_bdd);
-  }
-      if (strcmp(parv[4], "*"))
-        ddb_new_register(cptr, table, id, parv[1], parv[4], (!delete ? parv[5] : NULL));
-      else
-        ddb_compact(table, id, parv[5]);
-*/
+    ddb_compact(table, id, parv[5]);
+
   return 0;
 }

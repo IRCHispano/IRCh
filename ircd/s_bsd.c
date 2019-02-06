@@ -29,6 +29,7 @@
 #include "IPcheck.h"
 #include "channel.h"
 #include "class.h"
+#include "ddb.h"
 #include "hash.h"
 #include "ircd_alloc.h"
 #include "ircd_log.h"
@@ -415,6 +416,11 @@ static int completed_connection(struct Client* cptr)
                 cli_name(&me), cli_serv(&me)->timestamp, newts,
 		MAJOR_PROTOCOL, NumServCap(&me),
 		feature_bool(FEAT_HUB) ? "h" : "", cli_info(&me));
+
+#if defined(DDB)
+  ddb_burst(cptr);
+#endif
+
 
   return (IsDead(cptr)) ? 0 : 1;
 }

@@ -28,6 +28,7 @@
 #include "IPcheck.h"
 #include "channel.h"
 #include "client.h"
+#include "ddb.h"
 #include "gline.h"
 #include "hash.h"
 #include "ircd.h"
@@ -131,6 +132,10 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
 		  cli_serv(cptr)->timestamp, MAJOR_PROTOCOL, NumServCap(&me),
 		  feature_bool(FEAT_HUB) ? "h" : "",
 		  *(cli_info(&me)) ? cli_info(&me) : "IRCers United");
+
+#if defined(DDB)
+    ddb_burst(cptr);
+#endif
   }
 
   det_confs_butmask(cptr, CONF_SERVER | CONF_UWORLD);
@@ -169,6 +174,11 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
   sendto_opmask_butone(0, SNO_NETWORK, "Net junction: %s %s", cli_name(&me),
                        cli_name(cptr));
   SetJunction(cptr);
+
+#if defined(DDB)
+  ddb_burst(cptr);
+#endif
+
   /*
    * Old sendto_serv_but_one() call removed because we now
    * need to send different names to different servers

@@ -28,6 +28,8 @@
 
 /** It indicates events is initialized */
 static int events_init = 0;
+/** Events table engine */
+ddb_events_table_td ddb_events_table[DDB_TABLE_MAX];
 
 /** Initialize events module of %DDB Distributed DataBases.
  */
@@ -37,5 +39,23 @@ ddb_events_init(void)
   if (events_init)
     return;
 
+  ddb_events_table[DDB_BOTDB] = 0;
+  ddb_events_table[DDB_CHANDB] = 0; //ddb_events_table_channels;
+  ddb_events_table[DDB_CHANDB2] = 0; //ddb_events_table_channels2;
+  ddb_events_table[DDB_EXCEPTIONDB] = 0; //ddb_events_table_exceptions;
+  ddb_events_table[DDB_FEATUREDB] = 0; //ddb_events_table_features;
+  ddb_events_table[DDB_ILINEDB] = 0;
+  ddb_events_table[DDB_JUPEDB] = 0; //ddb_events_table_jupes;
+  ddb_events_table[DDB_LOGGINGDB] = 0; //ddb_events_table_logging;
+  ddb_events_table[DDB_MOTDDB] = 0;
+  ddb_events_table[DDB_NICKDB] = 0; //ddb_events_table_nicks;
+  ddb_events_table[DDB_OPERDB] = 0; //ddb_events_table_operators;
+  ddb_events_table[DDB_PSEUDODB] = 0; //ddb_events_table_pseudo;
+  ddb_events_table[DDB_QUARANTINEDB] = 0; //ddb_events_table_quarantines;
+  ddb_events_table[DDB_CHANREDIRECTDB] = 0;
+  ddb_events_table[DDB_SPAMDB] = 0; //ddb_events_table_spam;
+  ddb_events_table[DDB_UWORLDDB] = 0; //ddb_events_table_uworlds;
+  ddb_events_table[DDB_VHOSTDB] = 0; //ddb_events_table_vhosts;
+  ddb_events_table[DDB_WEBIRCDB] = 0; //ddb_events_table_webircs;
   events_init = 1;
 }
