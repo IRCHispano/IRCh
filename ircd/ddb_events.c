@@ -25,11 +25,32 @@
 #include "config.h"
 
 #include "ddb.h"
+#include "channel.h"
+#include "client.h"
+#include "hash.h"
+#include "ircd.h"
+#include "ircd_alloc.h"
+#include "ircd_chattr.h"
+#include "ircd_features.h"
+#include "ircd_snprintf.h"
+#include "ircd_tea.h"
+#include "msg.h"
+#include "numnicks.h"
+#include "s_user.h"
+#include "send.h"
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /** It indicates events is initialized */
 static int events_init = 0;
 /** Events table engine */
 ddb_events_table_td ddb_events_table[DDB_TABLE_MAX];
+
+static void ddb_events_table_features(char *key, char *content, int update);
+static void ddb_events_table_logging(char *key, char *content, int update);
 
 /** Initialize events module of %DDB Distributed DataBases.
  */
@@ -43,10 +64,10 @@ ddb_events_init(void)
   ddb_events_table[DDB_CHANDB] = 0; //ddb_events_table_channels;
   ddb_events_table[DDB_CHANDB2] = 0; //ddb_events_table_channels2;
   ddb_events_table[DDB_EXCEPTIONDB] = 0; //ddb_events_table_exceptions;
-  ddb_events_table[DDB_FEATUREDB] = 0; //ddb_events_table_features;
+  ddb_events_table[DDB_FEATUREDB] = ddb_events_table_features;
   ddb_events_table[DDB_ILINEDB] = 0;
   ddb_events_table[DDB_JUPEDB] = 0; //ddb_events_table_jupes;
-  ddb_events_table[DDB_LOGGINGDB] = 0; //ddb_events_table_logging;
+  ddb_events_table[DDB_LOGGINGDB] = ddb_events_table_logging;
   ddb_events_table[DDB_MOTDDB] = 0;
   ddb_events_table[DDB_NICKDB] = 0; //ddb_events_table_nicks;
   ddb_events_table[DDB_OPERDB] = 0; //ddb_events_table_operators;
@@ -59,3 +80,78 @@ ddb_events_init(void)
   ddb_events_table[DDB_WEBIRCDB] = 0; //ddb_events_table_webircs;
   events_init = 1;
 }
+
+/** Handle events on Features Table.
+ * @param[in] key Key of registry.
+ * @param[in] content Content of registry.
+ * @param[in] update Update of registry or no.
+ */
+static void
+ddb_events_table_features(char *key, char *content, int update)
+{
+  static char *keytemp = NULL;
+  static int key_len = 0;
+  int i = 0;
+
+  if ((strlen(key) + 1 > key_len) || (!keytemp))
+  {
+    key_len = strlen(key) + 1;
+    if (keytemp)
+      MyFree(keytemp);
+    keytemp = MyMalloc(key_len);
+
+    assert(0 != keytemp);
+  }
+  strcpy(keytemp, key);
+  while (keytemp[i])
+  {
+    keytemp[i] = ToUpper(keytemp[i]);
+    i++;
+  }
+
+  if (content)
+  {
+    char *tempa[2];
+    tempa[0] = keytemp;
+    tempa[1] = content;
+
+    feature_set(&me, (const char * const *)tempa, 2);
+  }
+  else
+  {
+    char *tempb[1];
+    tempb[0] = keytemp;
+
+    feature_set(&me, (const char * const *)tempb, 1);
+  }
+}
+
+/** Handle events on Logging Table.
+ * @param[in] key Key of registry.
+ * @param[in] content Content of registry.
+ * @param[in] update Update of registry or no.
+ */
+static void
+ddb_events_table_logging(char *key, char *content, int update)
+{
+#if 0
+  static char *keytemp = NULL;
+
+  if (content)
+  {
+    char *tempa[2];
+    tempa[0] = keytemp;
+    tempa[1] = content;
+
+    feature_set(&me, (const char * const *)tempa, 2);
+  }
+  else
+  {
+    char *tempb[1];
+    tempb[0] = keytemp;
+
+    feature_set(&me, (const char * const *)tempb, 1);
+  }
+#endif
+}
+

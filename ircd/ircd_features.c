@@ -261,6 +261,9 @@ typedef void (*feat_report_call)(struct Client* sptr, int marked);
 #define FEAT_OPER   0x0100	/**< set to display only to opers */
 #define FEAT_MYOPER 0x0200	/**< set to display only to local opers */
 #define FEAT_NODISP 0x0400	/**< feature must never be displayed */
+#if defined(DDB)
+#define FEAT_DDB    0x0800	/**< feature ajusted via DDB */
+#endif
 
 #define FEAT_READ   0x1000	/**< feature is read-only (for now, perhaps?) */
 
@@ -503,6 +506,15 @@ feature_set(struct Client* from, const char* const* fields, int count)
   int i, change = 0, tmp;
   const char *t_str;
   struct FeatureDesc *feat;
+#if defined(DDB)
+  int byddb = 0;
+
+  if (from == &me)
+  {
+    byddb = 1;
+    from = NULL;
+  }
+#endif
 
   if (from && !HasPriv(from, PRIV_SET))
     return send_reply(from, ERR_NOPRIVILEGES);
@@ -513,6 +525,23 @@ feature_set(struct Client* from, const char* const* fields, int count)
     else
       log_write(LS_CONFIG, L_ERROR, 0, "Not enough fields in F line");
   } else if ((feat = feature_desc(from, fields[0]))) { /* find feature */
+#if defined(DDB)
+    if (byddb)
+    {
+      if (count < 2)
+        feat->flags &= ~FEAT_DDB;
+      else
+        feat->flags |= FEAT_DDB;
+
+    } else if (feat->flags & FEAT_DDB) {
+      if (from) {
+        sendcmdto_one(&me, CMD_NOTICE, from, "%C :The feature has been set by DDB", from);
+        send_reply(from, ERR_NOFEATURE, fields[0]);
+      }
+      return 0;
+    }
+#endif
+
     if (from && feat->flags & FEAT_READ)
       return send_reply(from, ERR_NOFEATURE, fields[0]);
 
@@ -667,6 +696,16 @@ feature_reset(struct Client* from, const char* const* fields, int count)
   if (count < 1) /* check arguments */
     need_more_params(from, "RESET");
   else if ((feat = feature_desc(from, fields[0]))) { /* get descriptor */
+#if defined(DDB)
+    if (feat->flags & FEAT_DDB) {
+      if (from) {
+        sendcmdto_one(&me, CMD_NOTICE, from, "%C :The feature has been set by DDB", from);
+        send_reply(from, ERR_NOFEATURE, fields[0]);
+      }
+      return 0;
+     }
+#endif
+
     if (from && feat->flags & FEAT_READ)
       return send_reply(from, ERR_NOFEATURE, fields[0]);
 
@@ -772,6 +811,10 @@ feature_unmark(void)
   int i;
 
   for (i = 0; features[i].type; i++) {
+#if defined(DDB)
+    if (features[i].flags & FEAT_DDB)
+      continue;
+#endif
     features[i].flags &= ~FEAT_MARK; /* clear the marks... */
     if (features[i].unmark) /* call the unmark callback if necessary */
       (*features[i].unmark)();
@@ -786,6 +829,11 @@ feature_mark(void)
 
   for (i = 0; features[i].type; i++) {
     change = 0;
+
+#if defined(DDB)
+    if (features[i].flags & FEAT_DDB)
+      continue;
+#endif 
 
     switch (features[i].flags & FEAT_MASK) {
     case FEAT_NONE:
@@ -878,19 +926,47 @@ feature_report(struct Client* to, const struct StatDesc* sd, char* param)
 
 
     case FEAT_INT: /* Report an F-line with integer values */
+#if defined(DDB)
+      if (features[i].flags & FEAT_DDB) {
+        send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %d (set by DDB)",
+                   changed, features[i].type, features[i].v_int);
+        break;
+      } else if (report) /* it's been changed */
+#else
       if (report) /* it's been changed */
+#endif
 	send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %d",
 		   changed, features[i].type, features[i].v_int);
       break;
 
     case FEAT_BOOL: /* Report an F-line with boolean values */
+#if defined(DDB)
+      if (features[i].flags & FEAT_DDB) {
+        send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %s (set by DDB)",
+                   changed, features[i].type, features[i].v_int ? "TRUE" : "FALSE");
+        break;
+      } else if (report) /* it's been changed */
+#else
       if (report) /* it's been changed */
+#endif
 	send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %s",
 		   changed, features[i].type, features[i].v_int ? "TRUE" : "FALSE");
       break;
 
     case FEAT_STR: /* Report an F-line with string values */
+#if defined(DDB)
+      if (features[i].flags & FEAT_DDB) {
+        if (features[i].v_str)
+          send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %s (set by DDB)",
+                     changed, features[i].type, features[i].v_str);
+        else
+          send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s (set by DDB)",
+                     changed, features[i].type);
+        break;
+      } else if (report) { /* it's been changed */
+#else
       if (report) { /* it's been changed */
+#endif
 	if (features[i].v_str)
 	  send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "%c %s %s",
 		     changed, features[i].type, features[i].v_str);
