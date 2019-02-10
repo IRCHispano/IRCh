@@ -65,6 +65,7 @@ static struct LogTypes {
   { "FACILITY", log_set_facility, log_get_facility },
   { "SNOMASK", log_set_snomask, log_get_snomask },
   { "LEVEL", log_set_level, log_get_level },
+  { "CHANNEL", log_set_channel, log_get_channel },
   { 0, 0, 0 }
 };
 

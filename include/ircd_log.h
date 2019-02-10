@@ -93,8 +93,9 @@ extern void log_write_kill(const struct Client *victim,
 #define LOG_NOSYSLOG	0x01 /**< Do not send message to syslog. */
 #define LOG_NOFILELOG	0x02 /**< Do not send message to a log file. */
 #define LOG_NOSNOTICE	0x04 /**< Do not send message via server notice. */
+#define LOG_NOCHANNEL	0x08 /**< Do not send message to channel. */
 /** Bitmask of suppression flags for log_write() and log_vwrite(). */
-#define LOG_NOMASK	(LOG_NOSYSLOG | LOG_NOFILELOG | LOG_NOSNOTICE)
+#define LOG_NOMASK	(LOG_NOSYSLOG | LOG_NOFILELOG | LOG_NOSNOTICE | LOG_NOCHANNEL)
 
 extern char *log_canon(const char *subsys);
 
@@ -109,6 +110,9 @@ extern char *log_get_snomask(const char *subsys);
 
 extern int log_set_level(const char *subsys, const char *level);
 extern char *log_get_level(const char *subsys);
+
+extern int log_set_channel(const char *subsys, const char *channel);
+extern char *log_get_channel(const char *subsys);
 
 extern int log_set_default(const char *facility);
 extern char *log_get_default(void);

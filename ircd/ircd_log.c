@@ -27,11 +27,13 @@
 
 #include "ircd_log.h"
 #include "client.h"
+#include "hash.h"
 #include "ircd_alloc.h"
 #include "ircd_reply.h"
 #include "ircd_snprintf.h"
 #include "ircd_string.h"
 #include "ircd.h"
+#include "msg.h"
 #include "numeric.h"
 #include "s_debug.h"
 #include "send.h"
@@ -65,8 +67,9 @@ int log_inassert = 0;
 #define LOG_DOSYSLOG	0x10 /**< Try to use syslog. */
 #define LOG_DOFILELOG	0x20 /**< Try to log to a file. */
 #define LOG_DOSNOTICE	0x40 /**< Try to notify operators via notice. */
+#define LOG_DOCHANNEL	0x80 /**< Try to channel */
 /** Bitmask of valid delivery mechanisms. */
-#define LOG_DOMASK	(LOG_DOSYSLOG | LOG_DOFILELOG | LOG_DOSNOTICE)
+#define LOG_DOMASK	(LOG_DOSYSLOG | LOG_DOFILELOG | LOG_DOSNOTICE | LOG_DOCHANNEL)
 
 /** Map severity levels to strings and syslog levels */
 static struct LevelData {
@@ -134,12 +137,14 @@ static struct {
 #define LOG_MARK_FACILITY	0x0002	/**< facility has been changed */
 #define LOG_MARK_SNOMASK	0x0004	/**< snomask has been changed */
 #define LOG_MARK_LEVEL		0x0008	/**< level has been changed */
+#define LOG_MARK_CHANNEL	0x0010  /**< channel has been changed */
 
 /** Descriptions of all logging subsystems. */
 static struct LogDesc {
   enum LogSys	  subsys;   /**< number for subsystem */
   char		 *name;	    /**< subsystem name */
   struct LogFile *file;	    /**< file descriptor for subsystem */
+  char           *channel;  /**< channel for subsystem */
   unsigned int	  mark;     /**< subsystem has been changed */
   int		  def_fac;  /**< default facility */
   unsigned int	  def_sno;  /**< default snomask */
@@ -147,7 +152,7 @@ static struct LogDesc {
   unsigned int	  snomask;  /**< 0 means no server message */
   enum LogLevel	  level;    /**< logging level */
 } logDesc[] = {
-#define S(sys, p, sn) { LS_##sys, #sys, 0, 0, (p), (sn), (p), (sn), L_DEFAULT }
+#define S(sys, p, sn) { LS_##sys, #sys, 0, 0, 0, (p), (sn), (p), (sn), L_DEFAULT }
   S(SYSTEM, -1, 0),
   S(CONFIG, 0, SNO_OLDSNO),
   S(OPERMODE, -1, SNO_HACK4),
@@ -167,7 +172,7 @@ static struct LogDesc {
   S(IAUTH, -1, SNO_NETWORK),
   S(DEBUG, -1, SNO_DEBUG),
 #undef S
-  { LS_LAST_SYSTEM, 0, 0, -1, 0, -1, 0 }
+  { LS_LAST_SYSTEM, 0, 0, 0,-1, 0, -1, 0 }
 };
 
 /** Describes a log file. */
@@ -342,7 +347,7 @@ log_close(void)
 /** Write a logging entry.
  * @param[in] subsys Target subsystem.
  * @param[in] severity Severity of message.
- * @param[in] flags Combination of zero or more of LOG_NOSYSLOG, LOG_NOFILELOG, LOG_NOSNOTICE to suppress certain output.
+ * @param[in] flags Combination of zero or more of LOG_NOSYSLOG, LOG_NOFILELOG, LOG_NOSNOTICE, LOG_NOCHANNEL to suppress certain output.
  * @param[in] fmt Format string for message.
  */
 void
@@ -359,7 +364,7 @@ log_write(enum LogSys subsys, enum LogLevel severity, unsigned int flags,
 /** Write a logging entry using a va_list.
  * @param[in] subsys Target subsystem.
  * @param[in] severity Severity of message.
- * @param[in] flags Combination of zero or more of LOG_NOSYSLOG, LOG_NOFILELOG, LOG_NOSNOTICE to suppress certain output.
+ * @param[in] flags Combination of zero or more of LOG_NOSYSLOG, LOG_NOFILELOG, LOG_NOSNOTICE, LOG_NOCHANNEL to suppress certain output.
  * @param[in] fmt Format string for message.
  * @param[in] vl Variable-length argument list for message.
  */
@@ -411,6 +416,9 @@ log_vwrite(enum LogSys subsys, enum LogLevel severity, unsigned int flags,
   if (!(flags & LOG_NOSNOTICE) && (desc->snomask != 0 || ldata->snomask != 0))
     flags |= LOG_DOSNOTICE; /* will send a server notice */
 
+  if (!(flags & LOG_NOCHANNEL) && desc->channel)
+    flags |= LOG_DOCHANNEL; /* will send to channel */
+
   /* short-circuit if there's nothing to do... */
   if (!(flags & LOG_DOMASK))
     return;
@@ -455,6 +463,14 @@ log_vwrite(enum LogSys subsys, enum LogLevel severity, unsigned int flags,
   if (flags & LOG_DOSNOTICE)
     sendto_opmask_butone(0, ldata->snomask ? ldata->snomask : desc->snomask,
 			 "%s", buf);
+
+  if (flags & LOG_DOCHANNEL) {
+    struct Channel *chptr;
+
+    if ((chptr = FindChannel(desc->channel)))
+      sendcmdto_channel_butone(&me, CMD_PRIVATE, chptr, NULL, 0,
+                                       "%H :%s", chptr, buf);
+  }
 }
 
 /** Log an appropriate message for kills.
@@ -877,6 +893,56 @@ log_get_level(const char *subsys)
   return log_lev_name(desc->level);
 }
 
+/** Set a channel for a particular subsystem.
+ * @param[in] subsys Subsystem name.
+ * @param[in] channel Channel to write to.
+ * @return Zero on success; non-zero on error.
+ */
+int
+log_set_channel(const char *subsys, const char *channel)
+{
+  struct LogDesc *desc;
+
+  /* find subsystem */
+  if (!(desc = log_find(subsys)))
+    return 2;
+
+  if (channel)
+    desc->mark |= LOG_MARK_CHANNEL; /* mark that channel has been changed */
+  else
+    desc->mark &= ~LOG_MARK_CHANNEL; /* channel has been reset to defaults */
+
+  /* no change, don't go to the trouble of destroying and recreating */
+  if (desc->channel && channel &&
+      !ircd_strcmp(desc->channel, channel))
+    return 0;
+
+  if (desc->channel) /* destroy previous entry... */
+    MyFree(desc->channel);
+
+  /* set the channel to use */
+  if (channel)
+    DupString(desc->channel, channel);
+
+  return 0;
+}
+
+/** Find the log channel for a subsystem.
+ * @param[in] subsys Subsystem name.
+ * @return Channel for the subsystem, or NULL if not being logged to a channel.
+ */
+char *
+log_get_channel(const char *subsys)
+{
+  struct LogDesc *desc;
+
+  /* find subsystem */
+  if (!(desc = log_find(subsys)))
+    return 0;
+
+  return desc->channel;
+}
+
 /** Set the default syslog facility.
  * @param[in] facility Syslog facility name.
  * @return Zero on success, non-zero on error.
@@ -920,8 +986,11 @@ log_feature_unmark(void)
 {
   int i;
 
-  for (i = 0; i < LS_LAST_SYSTEM; i++)
+  for (i = 0; i < LS_LAST_SYSTEM; i++) {
     logDesc[i].mark = 0;
+    if (logDesc[i].channel)
+      MyFree(logDesc[i].channel);
+  }
 }
 
 /** Reset unmodified fields in all log subsystems to their defaults.
@@ -952,6 +1021,12 @@ log_feature_mark(int flag)
 
     if (!(logDesc[i].mark & LOG_MARK_LEVEL)) /* set default level */
       logDesc[i].level = L_DEFAULT;
+
+    if (!(logDesc[i].mark & LOG_MARK_CHANNEL)) { /* delete channel */
+      if (logDesc[i].channel)
+        MyFree(logDesc[i].channel);
+      logDesc[i].channel = 0;
+    }
   }
 
   return 0; /* we don't have a notify handler */
@@ -984,6 +1059,10 @@ log_feature_report(struct Client *to, int flag)
     if (logDesc[i].mark & LOG_MARK_LEVEL) /* report log level */
       send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F LOG %s LEVEL %s",
 		 logDesc[i].name, log_lev_name(logDesc[i].level));
+
+    if (logDesc[i].mark & LOG_MARK_CHANNEL) /* report channel */
+      send_reply(to, SND_EXPLICIT | RPL_STATSFLINE, "F LOG %s CHANNEL %s",
+                 logDesc[i].name, logDesc[i].channel);
   }
 
   if (flag) /* report default facility */

@@ -186,6 +186,13 @@ configuration looks like "LOG" = "<subsys>" "SNOMASK" "<mask>"; again,
 <subsys> is one of the subsystems described above, and <mask> is one
 of the mask names.
 
+Logging to channel
+
+By default, no logs are sent to channel.  This can be overridden
+using an Feature entry like "LOG" = "<subsys>" "CHANNEL" "<channel>";
+<subsys>, as above, should be replaced with one of the subsystem names
+described above, and <channel> should be a channel name for sends the log.
+
 Setting Minimum Logging Level
 
 The minimum log level for a particular subsystem may be set with an
