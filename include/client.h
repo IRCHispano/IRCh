@@ -133,6 +133,7 @@ enum Priv
     PRIV_FORCE_OPMODE, /**< can hack modes on quarantined channels */
     PRIV_FORCE_LOCAL_OPMODE, /**< can hack modes on quarantined local channels */
     PRIV_APASS_OPMODE, /**< can hack modes +A/-A/+U/-U */
+    PRIV_NETWORK, /**< can CONNECT/SQUIT servers */
     PRIV_CHANSERV, /**< oper can set/unset user mode +k */
     PRIV_HIDDEN_VIEWER, /**< oper can set/unset user mode +X */
     PRIV_WHOIS_NOTICE, /**< oper can set/unset user mode +W */
@@ -253,6 +254,9 @@ struct Connection
                                         the socket and after which the
                                         connection was accepted. */
   char con_passwd[PASSWDLEN + 1];    /**< Password given by user. */
+#if defined(DDB)
+  char con_ddb_passwd[DDBPWDLEN + 1];/**< Password +r given by user. */
+#endif
   char con_buffer[BUFSIZE];          /**< Incoming message buffer; or
                                         the error that caused this
                                         clients socket to close. */
@@ -412,6 +416,10 @@ struct Client {
 #define cli_sockhost(cli)	con_sockhost(cli_connect(cli))
 /** Get the client's password. */
 #define cli_passwd(cli)		con_passwd(cli_connect(cli))
+#if defined(DDB)
+/** Get the client's DDB password (+r). */
+#define cli_ddb_passwd(cli)     con_ddb_passwd(cli_connect(cli))
+#endif
 /** Get the unprocessed input buffer for a client's connection.  */
 #define cli_buffer(cli)		con_buffer(cli_connect(cli))
 /** Get the Socket structure for sending to a client. */
@@ -493,6 +501,10 @@ struct Client {
 #define con_sockhost(con)	((con)->con_sockhost)
 /** Get the password sent by the remote end of the connection.  */
 #define con_passwd(con)		((con)->con_passwd)
+#if defined(DDB)
+/** Get the DDB password sent by the remote end of the connection.  */
+#define con_ddb_passwd(con)     ((con)->con_ddb_passwd)
+#endif
 /** Get the buffer of unprocessed incoming data from the connection. */
 #define con_buffer(con)		((con)->con_buffer)
 /** Get the Socket for the connection. */

@@ -36,6 +36,7 @@
 #include "match.h"
 #include "msg.h"
 #include "numeric.h"
+#include "numnicks.h"
 #include "s_user.h"
 #include "s_serv.h"
 #include "send.h"
@@ -52,19 +53,32 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask, int
   struct DLink *lp;
   char *p = prompt + prompt_length;
   int cnt = 0;
-  
+
   *p = '\0';
   if (prompt_length > 60)
     send_reply(cptr, RPL_MAPMORE, prompt, cli_name(server));
   else
   {
     char lag[512];
+    char numeric[16];
+    unsigned int users;
+    unsigned int totalusers;
+    unsigned int percentage;
+
+    totalusers = UserStats.clients;
+    if (!totalusers)
+      totalusers = 1;
+
+    users = (IsMe(server) ? UserStats.local_clients : cli_serv(server)->clients);
+    percentage = (10000 * users) / totalusers;
+
     if (cli_serv(server)->lag>10000)
       lag[0]=0;
     else if (cli_serv(server)->lag<0)
       strcpy(lag,"(0s)");
     else
       sprintf(lag,"(%is)",cli_serv(server)->lag);
+    sprintf(numeric, "%s:%d", NumServ(server), base64toint(NumServ(server)));
     if (IsBurst(server))
       chr = "*";
     else if (IsBurstAck(server))
@@ -72,8 +86,8 @@ static void dump_map(struct Client *cptr, struct Client *server, char *mask, int
     else
       chr = "";
     send_reply(cptr, RPL_MAP, prompt, chr, cli_name(server),
-               lag, (server == &me) ? UserStats.local_clients :
-                                      cli_serv(server)->clients);
+               numeric, lag, users, (users == 1) ? "" : "s",
+               (percentage / 100), (percentage % 100));
   }
   if (prompt_length > 0)
   {
@@ -121,6 +135,43 @@ int m_map(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
                   "Visit ", feature_str(FEAT_HIS_URLSERVERS));
     return 0;
   }
+
+  if (feature_bool(FEAT_HIS_SERVERS) && !IsAnOper(sptr)) {
+    struct Client *acptr;
+    unsigned int clients;
+    unsigned int percentage;
+    int numps = 0;
+
+    /* Special MAP only show services */
+    clients = UserStats.clients - UserStats.services;
+    percentage = (10000 * clients) / UserStats.clients;
+
+    send_reply(sptr, SND_EXPLICIT | RPL_MAP, ":%s [%u client%s - %u.%u%%]",
+               cli_name(&his), clients, (clients == 1) ? "" : "s",
+               percentage / 100, percentage % 100);
+
+    for (acptr = GlobalClientList; acptr; acptr = cli_next(acptr))
+    {
+      if (!IsServer(acptr) && !IsMe(acptr))
+        continue;
+      if (!IsService(acptr))
+        continue;
+
+      numps++;
+      clients = cli_serv(acptr)->clients;
+      percentage = (10000 * clients) / UserStats.clients;
+
+      if (numps < UserStats.pservers)
+        send_reply(sptr, SND_EXPLICIT | RPL_MAP, ":|-%s [%u clients - %u.%u%%]",
+                   cli_name(acptr), clients, (percentage / 100), (percentage % 100));
+      else
+        send_reply(sptr, SND_EXPLICIT | RPL_MAP, ":`-%s [%u clients - %u.%u%%]",
+                   cli_name(acptr), clients, (percentage / 100), (percentage % 100));
+    }
+    send_reply(sptr, RPL_MAPEND);
+    return 0;
+  }
+
   if (parc < 2)
     parv[1] = "*";
   dump_map(sptr, &me, parv[1], 0);

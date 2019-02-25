@@ -44,7 +44,9 @@ struct UserStatistics {
 
   /* Global counts: */
   unsigned int servers;         /**< Known servers, including #me. */
+  unsigned int pservers;        /**< Pseudoserver Services. */
   unsigned int clients;         /**< Registered users. */
+  unsigned int services;        /**< Services. */
 
   /* Global user mode changes: */
   unsigned int inv_clients;     /**< Registered invisible users. */
@@ -62,7 +64,15 @@ extern struct UserStatistics UserStats;
 
 /* Macros for remote connections: */
 /** Count \a cptr as a new remote client. */
-#define Count_newremoteclient(UserStats, cptr)  (++UserStats.clients, ++(cli_serv(cptr)->clients))
+#define Count_newremoteclient(UserStats, cptr) \
+  do { \
+    ++UserStats.clients; \
+    ++(cli_serv(cptr)->clients); \
+    if (UserStats.clients >= max_global_count) { \
+      max_global_count = UserStats.clients; \
+      max_global_count_TS = CurrentTime; \
+    } \
+  } while(0)
 /** Count a new remote server. */
 #define Count_newremoteserver(UserStats)  (++UserStats.servers)
 
@@ -86,8 +96,14 @@ extern struct UserStatistics UserStats;
     --UserStats.unknowns; ++UserStats.local_clients; ++UserStats.clients; \
     if (match(feature_str(FEAT_DOMAINNAME), cli_sockhost(cptr)) == 0) \
       ++current_load.local_count; \
-    if (UserStats.local_clients > max_client_count) \
+    if (UserStats.local_clients > max_client_count) { \
       max_client_count = UserStats.local_clients; \
+      max_client_count_TS = CurrentTime; \
+    } \
+    if (UserStats.clients > max_global_count) { \
+      max_global_count = UserStats.clients; \
+      max_global_count_TS = CurrentTime; \
+    } \
     if (UserStats.local_clients + UserStats.local_servers > max_connection_count) \
     { \
       max_connection_count = UserStats.local_clients + UserStats.local_servers; \

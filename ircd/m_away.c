@@ -41,7 +41,7 @@
 
 /*
  * user_set_away - set user away state
- * returns 1 if client is away or changed away message, 0 if 
+ * returns 1 if client is away or changed away message, 0 if
  * client is removing away status.
  * NOTE: this function may modify user and message, so they
  * must be mutable.
@@ -104,7 +104,7 @@ int m_away(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   if (user_set_away(cli_user(sptr), away_message))
   {
-    if (!was_away)    
+    if (!was_away)
       sendcmdto_serv_butone(sptr, CMD_AWAY, cptr, ":%s", away_message);
     send_reply(sptr, RPL_NOWAWAY);
     sendcmdto_common_channels_capab_butone(sptr, CMD_AWAY, sptr, CAP_AWAYNOTIFY, CAP_NONE,

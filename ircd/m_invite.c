@@ -82,8 +82,16 @@ int m_invite(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   }
 
-  if (is_silenced(sptr, acptr))
+  if (is_silenced(sptr, acptr)) {
+    send_reply(sptr, ERR_ISSILENCING, cli_name(acptr));
     return 0;
+  }
+
+  /* +R */
+  if (IsMsgOnlyReg(acptr) && !IsAccount(sptr) && !IsAnOper(sptr)) {
+    send_reply(sptr, ERR_NONONREG, cli_name(acptr));
+    return 0;
+  }
 
   if (!IsChannelName(parv[2])
       || !strIsIrcCh(parv[2])
@@ -172,11 +180,11 @@ int ms_invite(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   struct Client *acptr;
   struct Channel *chptr;
   time_t invite_ts;
-  
+
   if (IsServer(sptr)) {
     /*
      * this will blow up if we get an invite from a server
-     * we look for channel membership in sptr below. 
+     * we look for channel membership in sptr below.
      */
     return protocol_violation(sptr,"Server attempting to invite");
   }
@@ -214,7 +222,7 @@ int ms_invite(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   } else if (IsBurstOrBurstAck(cptr))
     return 0;
 
-  if (!IsChannelService(sptr) && !find_channel_member(sptr, chptr)) {
+  if (!IsServicesBot(sptr) && !find_channel_member(sptr, chptr)) {
     send_reply(sptr, ERR_NOTONCHANNEL, chptr->chname);
     return 0;
   }
@@ -224,8 +232,10 @@ int ms_invite(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   }
 
-  if (is_silenced(sptr, acptr))
+  if (is_silenced(sptr, acptr)) {
+    send_reply(sptr, ERR_ISSILENCING, cli_name(acptr));
     return 0;
+  }
 
   if (MyConnect(acptr)) {
     add_invite(acptr, chptr);

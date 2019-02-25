@@ -166,8 +166,8 @@ extern const struct Numeric* get_error_numeric(int err);
 /*      RPL_LOAD_THROTTLED   263           efnet/hybrid */
 /*	RPL_TRYAGAIN	     263	   Numerics List: IRCnet */
 /*	RPL_LOAD2HI	     263	   Dalnet */
-/*      RPL_CURRENT_LOCAL    265           aircd/efnet/hybrid/dalnet*/
-/*      RPL_CURRENT_GLOBAL   266           aircd/efnet/hybrid/dalnet */
+#define RPL_CURRENT_LOCAL    265        /* IRC-Hispano/aircd/efnet/hybrid/dalnet */
+#define RPL_CURRENT_GLOBAL   266        /* IRC-Hispano/aircd/efnet/hybrid/dalnet */
 /*      RPL_START_NETSTAT    267           aircd */
 /*      RPL_NETSTAT          268           aircd */
 /*      RPL_END_NETSTAT      269           aircd */
@@ -446,6 +446,8 @@ extern const struct Numeric* get_error_numeric(int err);
 /*      ERR_GHOSTEDCLIENT    503           efnet */
 /*	ERR_VWORLDWARN	     503	   austnet */
 
+#define ERR_SILECANTBESHOWN  509	/* IRC-Hispano extension */
+#define ERR_ISSILENCING      510	/* IRC-Hispano extension */
 #define ERR_SILELISTFULL     511        /* Undernet extension */
 /*      ERR_NOTIFYFULL       512           aircd */
 /*	ERR_TOOMANYWATCH     512           Numeric List: Dalnet */

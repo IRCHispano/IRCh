@@ -57,21 +57,36 @@ int m_lusers(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   assert(UserStats.inv_clients <= UserStats.clients + UserStats.unknowns);
 
-  send_reply(sptr, RPL_LUSERCLIENT, 
-	     UserStats.clients - UserStats.inv_clients + UserStats.unknowns,
-	     UserStats.inv_clients, UserStats.servers);
+  if (feature_bool(FEAT_HIS_SERVERS) && !IsAnOper(sptr))
+    send_reply(sptr, RPL_LUSERCLIENT,
+               UserStats.clients - UserStats.inv_clients + UserStats.unknowns,
+               UserStats.inv_clients, UserStats.pservers + 1);
+  else
+    send_reply(sptr, RPL_LUSERCLIENT,
+	       UserStats.clients - UserStats.inv_clients + UserStats.unknowns,
+	       UserStats.inv_clients, UserStats.servers);
   if (longoutput && UserStats.opers)
     send_reply(sptr, RPL_LUSEROP, UserStats.opers);
   if (UserStats.unknowns > 0)
     send_reply(sptr, RPL_LUSERUNKNOWN, UserStats.unknowns);
   if (longoutput && UserStats.channels > 0)
     send_reply(sptr, RPL_LUSERCHANNELS, UserStats.channels);
-  send_reply(sptr, RPL_LUSERME, UserStats.local_clients,
-	     UserStats.local_servers);
 
-  sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Highest connection count: "
-		"%d (%d clients)", sptr, max_connection_count,
-		max_client_count);
+  if (feature_bool(FEAT_HIS_SERVERS) && !IsAnOper(sptr)) {
+    send_reply(sptr, RPL_LUSERME, UserStats.clients - UserStats.services,
+               UserStats.pservers);
+
+    sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Highest connection count: "
+                  "%d (%d clients)", sptr, max_global_count - UserStats.services,
+                  max_global_count - UserStats.services - UserStats.pservers);
+  } else {
+    send_reply(sptr, RPL_LUSERME, UserStats.local_clients,
+	       UserStats.local_servers);
+
+    sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Highest connection count: "
+		  "%d (%d clients)", sptr, max_connection_count,
+		  max_client_count);
+  }
 
   return 0;
 }
@@ -91,8 +106,13 @@ int ms_lusers(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
         HUNTED_ISME)
       return 0;
 
-  send_reply(sptr, RPL_LUSERCLIENT, UserStats.clients - UserStats.inv_clients,
-	     UserStats.inv_clients, UserStats.servers);
+  if (feature_bool(FEAT_HIS_SERVERS) && !IsAnOper(sptr))
+    send_reply(sptr, RPL_LUSERCLIENT,
+               UserStats.clients - UserStats.inv_clients + UserStats.unknowns,
+               UserStats.inv_clients, UserStats.pservers + 1);
+  else
+    send_reply(sptr, RPL_LUSERCLIENT, UserStats.clients - UserStats.inv_clients,
+	       UserStats.inv_clients, UserStats.servers);
   if (longoutput && UserStats.opers)
     send_reply(sptr, RPL_LUSEROP, UserStats.opers);
   if (UserStats.unknowns > 0)
@@ -102,9 +122,18 @@ int ms_lusers(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   send_reply(sptr, RPL_LUSERME, UserStats.local_clients,
 	     UserStats.local_servers);
 
-  sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Highest connection count: "
-		"%d (%d clients)", sptr, max_connection_count,
-		max_client_count);
+  if (feature_bool(FEAT_HIS_SERVERS) && !IsAnOper(sptr)) {
+    send_reply(sptr, RPL_LUSERME, UserStats.clients - UserStats.services,
+               UserStats.pservers);
+
+    sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Highest connection count: "
+                  "%d (%d clients)", sptr, max_global_count - UserStats.services,
+                  max_global_count - UserStats.services - UserStats.pservers);
+  } else {
+    sendcmdto_one(&me, CMD_NOTICE, sptr, "%C :Highest connection count: "
+		  "%d (%d clients)", sptr, max_connection_count,
+		  max_client_count);
+  }
 
   return 0;
 }

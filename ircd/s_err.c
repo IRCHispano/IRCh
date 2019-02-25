@@ -64,7 +64,7 @@ static Numeric replyTable[] = {
 /* 014 */
   { 0 },
 /* 015 */
-  { RPL_MAP, ":%s%s%s %s [%u clients]", "015" },
+  { RPL_MAP, ":%s%s%s (%s) %s [%u client%s - %u.%u%%]", "015" },
 /* 016 */
   { RPL_MAPMORE, ":%s%s --> *more*", "016" },
 /* 017 */
@@ -564,9 +564,9 @@ static Numeric replyTable[] = {
 /* 264 */
   { 0 },
 /* 265 */
-  { 0 },
+  { RPL_CURRENT_LOCAL, ":Current local users: %d Max: %d (%s, since %s)", "265" },
 /* 266 */
-  { 0 },
+  { RPL_CURRENT_GLOBAL, ":Current global users: %d Max: %d (%s, since %s)", "266" },
 /* 267 */
   { 0 },
 /* 268 */
@@ -1052,9 +1052,9 @@ static Numeric replyTable[] = {
 /* 508 */
   { 0 },
 /* 509 */
-  { 0 },
+  { ERR_SILECANTBESHOWN, "%s :You can't see another user silence list", "509" },
 /* 510 */
-  { 0 },
+  { ERR_ISSILENCING, ":You can't talk to %s. (S)he is silencing you", "510" },
 /* 511 */
   { ERR_SILELISTFULL, "%s :Your silence list is full", "511" },
 /* 512 */

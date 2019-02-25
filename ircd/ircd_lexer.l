@@ -143,6 +143,7 @@ static struct lexer_token {
   { "mb", MBYTES },
   { "megabytes", MBYTES },
   { "mode_lchan", TPRIV_MODE_LCHAN },
+  { "network", TPRIV_NETWORK },
   { "operator", OPER },
   { "opmode", TPRIV_OPMODE },
   { "password", PASS },

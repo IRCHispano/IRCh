@@ -57,6 +57,7 @@ int m_links(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   char *mask;
   struct Client *acptr;
+  int only_services = feature_bool(FEAT_HIS_SERVERS) && !IsAnOper(sptr);
 
   if (feature_bool(FEAT_HIS_LINKS) && !IsAnOper(sptr))
   {
@@ -77,14 +78,20 @@ int m_links(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   else
     mask = parc < 2 ? 0 : parv[1];
 
+  if (only_services)
+    send_reply(sptr, RPL_LINKS, cli_name(&his), cli_name(&his), 0,
+               atoi(MAJOR_PROTOCOL), cli_info(&his));
+
   for (acptr = GlobalClientList, collapse(mask); acptr; acptr = cli_next(acptr))
   {
     if (!IsServer(acptr) && !IsMe(acptr))
       continue;
+    if (only_services && !IsService(acptr))
+      continue;
     if (!BadPtr(mask) && match(mask, cli_name(acptr)))
       continue;
     send_reply(sptr, RPL_LINKS, cli_name(acptr), cli_name(cli_serv(acptr)->up),
-        cli_hopcount(acptr), cli_serv(acptr)->prot,
+        only_services ? 1 : cli_hopcount(acptr), cli_serv(acptr)->prot,
         ((cli_info(acptr))[0] ? cli_info(acptr) : "(Unknown Location)"));
   }
 
@@ -107,31 +114,37 @@ int m_links(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
  */
 int
 ms_links(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
- {
-   char *mask;
-   struct Client *acptr;
+{
+  char *mask;
+  struct Client *acptr;
+  int only_services = feature_bool(FEAT_HIS_SERVERS) && !IsAnOper(sptr);
 
-   if (parc > 2)
-   {
-     if (hunt_server_cmd(sptr, CMD_LINKS, cptr, 1, "%C :%s", 1, parc, parv) !=
-         HUNTED_ISME)
-       return 0;
-     mask = parv[2];
-   }
-   else
-     mask = parc < 2 ? 0 : parv[1];
- 
-   for (acptr = GlobalClientList, collapse(mask); acptr; acptr = cli_next(acptr))
-   {
-     if (!IsServer(acptr) && !IsMe(acptr))
-       continue;
-     if (!BadPtr(mask) && match(mask, cli_name(acptr)))
-       continue;
-     send_reply(sptr, RPL_LINKS, cli_name(acptr), cli_name(cli_serv(acptr)->up),
-                cli_hopcount(acptr), cli_serv(acptr)->prot,
-                ((cli_info(acptr))[0] ? cli_info(acptr) : "(Unknown Location)"));
-   }
- 
-   send_reply(sptr, RPL_ENDOFLINKS, BadPtr(mask) ? "*" : mask);
-   return 0;
- }
+  if (parc > 2)
+  {
+    if (hunt_server_cmd(sptr, CMD_LINKS, cptr, 1, "%C :%s", 1, parc, parv) !=
+        HUNTED_ISME)
+      return 0;
+    mask = parv[2];
+  }
+  else
+    mask = parc < 2 ? 0 : parv[1];
+
+  if (only_services)
+    send_reply(sptr, RPL_LINKS, cli_name(&his), cli_name(&his), 0, MAJOR_PROTOCOL, cli_info(&his));
+
+  for (acptr = GlobalClientList, collapse(mask); acptr; acptr = cli_next(acptr))
+  {
+    if (!IsServer(acptr) && !IsMe(acptr))
+      continue;
+    if (only_services && !IsService(acptr))
+      continue;
+    if (!BadPtr(mask) && match(mask, cli_name(acptr)))
+      continue;
+    send_reply(sptr, RPL_LINKS, cli_name(acptr), cli_name(cli_serv(acptr)->up),
+               cli_hopcount(acptr), cli_serv(acptr)->prot,
+               ((cli_info(acptr))[0] ? cli_info(acptr) : "(Unknown Location)"));
+  }
+
+  send_reply(sptr, RPL_ENDOFLINKS, BadPtr(mask) ? "*" : mask);
+  return 0;
+}

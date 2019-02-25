@@ -35,6 +35,9 @@ struct Client;
 
 extern unsigned int max_connection_count;
 extern unsigned int max_client_count;
+extern unsigned int max_global_count;
+extern time_t max_client_count_TS;
+extern time_t max_global_count_TS;
 
 /*
  * Prototypes

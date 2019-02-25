@@ -383,8 +383,8 @@ static struct FeatureDesc {
   F_B(HIS_SNOTICES_OPER_ONLY, 0, 1, 0),
   F_B(HIS_DEBUG_OPER_ONLY, 0, 1, 0),
   F_B(HIS_WALLOPS, 0, 1, 0),
-  F_B(HIS_MAP, 0, 1, 0),
-  F_B(HIS_LINKS, 0, 1, 0),
+  F_B(HIS_MAP, 0, 0, 0),
+  F_B(HIS_LINKS, 0, 0, 0),
   F_B(HIS_TRACE, 0, 1, 0),
   F_B(HIS_STATS_a, 0, 1, 0),
   F_B(HIS_STATS_b, 0, 1, 0),
@@ -430,6 +430,7 @@ static struct FeatureDesc {
   F_B(HIS_REWRITE, 0, 1, 0),
   F_I(HIS_REMOTE, 0, 1, 0),
   F_B(HIS_NETSPLIT, 0, 1, 0),
+  F_B(HIS_SERVERS, 0, 1, 0),
   F_S(HIS_SERVERNAME, 0, "*.irc-hispano.org", feature_notify_servername),
   F_S(HIS_SERVERINFO, 0, "IRC-Hispano, la red Hispana", feature_notify_serverinfo),
   F_S(HIS_URLSERVERS, 0, "https://www.irc-hispano.org/servidores", 0),
@@ -438,6 +439,9 @@ static struct FeatureDesc {
   F_S(NETWORK, 0, "IRC-Hispano", 0),
   F_S(URL_CLIENTS, 0, "ftp://ftp.undernet.org/pub/irc/clients", 0),
   F_S(URLREG, 0, "https://www.irc-hispano.org/regnick", 0),
+  F_B(ALLOW_RANDOM_NICKS, 0, 1, 0),
+  F_S(PREFIX_RANDOM_NICKS, 0, "Guest-", 0),
+  F_B(ALLOW_SUSPEND_NICKS, 0, 1, 0),
 
   /* SSL FEAT_'s */
   F_S(SSL_CERTFILE, FEAT_CASE, "ircd.pem", 0),
@@ -483,7 +487,7 @@ feature_desc(struct Client* from, const char *feature)
   assert(0 != feature);
 
   for (i = 0; features[i].type; i++) /* find appropriate descriptor */
-    if (!strcmp(feature, features[i].type))
+    if (!strcasecmp(feature, features[i].type))
       return &features[i];
 
   Debug((DEBUG_ERROR, "Unknown feature \"%s\"", feature));

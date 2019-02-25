@@ -241,6 +241,9 @@ static void exit_one_client(struct Client* bcptr, const char* comment)
       Count_clientdisconnects(bcptr, UserStats);
     else
       Count_remoteclientquits(UserStats, bcptr);
+
+    if (IsService(cli_user(bcptr)->server))
+      --UserStats.services;
   }
   else if (IsServer(bcptr))
   {
@@ -252,6 +255,9 @@ static void exit_one_client(struct Client* bcptr, const char* comment)
       Count_serverdisconnects(UserStats);
     else
       Count_remoteserverquits(UserStats);
+
+    if (IsService(bcptr))
+      --UserStats.pservers;
   }
   else if (IsMe(bcptr))
   {

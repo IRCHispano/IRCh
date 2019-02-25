@@ -62,6 +62,25 @@ int mr_pass(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (password[0] == '\0')
     return need_more_params(cptr, "PASS");
 
+#if defined(DDB)
+  if (IsUserPort(cptr))
+  {
+    /*
+     *   PASS :server_pass[:ddb_pass]
+     *   PASS :ddb_pass
+     */
+    char *ddb_pwd;
+
+    ddb_pwd = strchr(password, ':');
+    if (ddb_pwd)
+      *ddb_pwd++ = '\0';
+    else
+      ddb_pwd = password;
+
+    ircd_strncpy(cli_ddb_passwd(cptr), ddb_pwd, DDBPWDLEN);
+  }
+#endif
+
   ircd_strncpy(cli_passwd(cptr), password, PASSWDLEN);
   return cli_auth(cptr) ? auth_set_password(cli_auth(cptr), password) : 0;
 }

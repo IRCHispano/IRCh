@@ -65,6 +65,12 @@
 unsigned int max_connection_count = 0;
 /** Maximum (local) client count since last restart. */
 unsigned int max_client_count = 0;
+/** Maximum global client count since last restart. */
+unsigned int max_global_count = 0;
+/** TimeStamp maximum (local) client count since last restart. */
+time_t max_client_count_TS = 0;
+/** TimeStamp maximum global client count since last restart. */
+time_t max_global_count_TS = 0;
 
 /** Squit a new (pre-burst) server.
  * @param cptr Local client that tried to introduce the server.
@@ -146,6 +152,9 @@ int server_estab(struct Client *cptr, struct ConfItem *aconf)
   cli_handler(cptr) = SERVER_HANDLER;
   Count_unknownbecomesserver(UserStats);
   SetBurst(cptr);
+
+  if (IsService(cptr))
+    ++UserStats.pservers;
 
 /*    nextping = CurrentTime; */
 

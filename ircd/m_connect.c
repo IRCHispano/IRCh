@@ -181,6 +181,9 @@ int mo_connect(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (parc < 2)
     return need_more_params(sptr, "CONNECT");
 
+  if (!HasPriv(sptr, PRIV_NETWORK))
+    return send_reply(cptr, ERR_NOPRIVILEGES);
+
   if (parc > 3) {
     /*
      * if parc > 3, we are trying to connect two remote
