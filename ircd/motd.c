@@ -26,6 +26,7 @@
 #include "config.h"
 
 #include "motd.h"
+#include "ddb.h"
 #include "class.h"
 #include "client.h"
 #include "fileio.h"
@@ -47,6 +48,7 @@
 
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -280,12 +282,23 @@ motd_lookup(struct Client *cptr)
 static int
 motd_forward(struct Client *cptr, struct MotdCache *cache)
 {
-  int i;
+#if defined(DDB)
+  struct Ddb *ddb;
+  char tmpddb[16];
+#endif
+  int i = 0;
 
   assert(0 != cptr);
 
+#if defined(DDB)
+  ddb = ddb_find_key(DDB_MOTDDB, "0");
+
+  if (!cache && ((!ddb) || !strcmp(ddb_content(ddb), "%LOCALMOTD%")))
+    return send_reply(cptr, ERR_NOMOTD);
+#else
   if (!cache) /* no motd to send */
     return send_reply(cptr, ERR_NOMOTD);
+#endif
 
   /* send the motd */
   send_reply(cptr, RPL_MOTDSTART, cli_name(&me));
@@ -294,8 +307,24 @@ motd_forward(struct Client *cptr, struct MotdCache *cache)
 	     cache->modtime.tm_mday, cache->modtime.tm_hour,
 	     cache->modtime.tm_min);
 
-  for (i = 0; i < cache->count; i++)
-    send_reply(cptr, RPL_MOTD, cache->motd[i]);
+#if defined(DDB)
+  while (ddb)
+  {
+    if (!strcmp(ddb_content(ddb), "%LOCALMOTD")) {
+      for (int j = 0; j < cache->count; j++)
+        send_reply(cptr, RPL_MOTD, cache->motd[j]);
+    } else
+      send_reply(cptr, RPL_MOTD, ddb_content(ddb));
+
+    sprintf(tmpddb, "%d", ++i);
+    ddb = ddb_find_key(DDB_MOTDDB, tmpddb);
+  }
+#endif
+
+  if (!i) {
+    for (i = 0; i < cache->count; i++)
+      send_reply(cptr, RPL_MOTD, cache->motd[i]);
+  }
 
   return send_reply(cptr, RPL_ENDOFMOTD); /* end */
 }

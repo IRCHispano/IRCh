@@ -51,7 +51,7 @@
  *
  * modified 30 mar 1995 by flux (cmlambertus@ucdavis.edu)
  * T line patch - display motd based on hostmask
- * modified again 7 sep 97 by Ghostwolf with code and ideas 
+ * modified again 7 sep 97 by Ghostwolf with code and ideas
  * stolen from comstud & Xorath.  All motd files are read into
  * memory in read_motd() in s_conf.c
  *
@@ -74,7 +74,7 @@ int m_motd(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
  *
  * modified 30 mar 1995 by flux (cmlambertus@ucdavis.edu)
  * T line patch - display motd based on hostmask
- * modified again 7 sep 97 by Ghostwolf with code and ideas 
+ * modified again 7 sep 97 by Ghostwolf with code and ideas
  * stolen from comstud & Xorath.  All motd files are read into
  * memory in read_motd() in s_conf.c
  *
