@@ -77,6 +77,9 @@
 /** Maximum length for a password used for connecting servers and clients.
  */
 #define PASSWDLEN       20
+/** Maximum length for a password used for registered nick.
+ */
+#define DDBPWDLEN       12
 /** Maximum length of a numeric IP (v4 or v6) address.
  * "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"
  */
