@@ -695,6 +695,23 @@ struct Ddb *ddb_find_key(unsigned char table, char *key)
   return ddb;
 }
 
+/** Get nick!user@host of the virtual bot.
+ * @param[in] bot Key of the register.
+ * @return nick!user@host of the virtual bot if exists and
+ * if not exists, return my servername.
+ */
+char *
+ddb_get_botname(char *bot)
+{
+  struct Ddb *ddb;
+
+  ddb = ddb_find_key(DDB_BOTDB, bot);
+  if (ddb)
+    return ddb_content(ddb);
+  else
+    return cli_name(&me);
+}
+
 /** When IRCD is reloading, it is executing.
  */
 void

@@ -85,6 +85,15 @@
 /** Last table of %DDB Distributed Databases. */
 #define DDB_END            'z'
 
+/*
+ * PseudoBots
+ */
+/** Nickname of virtual bot for nicks registers */
+#define DDB_NICKSERV    "NickServ"
+/** Nickname of virtual bot for channel bot */
+#define DDB_CHANSERV   "ChanServ"
+
+
 /** Describes a key on one table.
  */
 struct Ddb {
@@ -146,6 +155,7 @@ extern int ddb_table_burst(struct Client *cptr, unsigned char table, unsigned lo
 extern struct Ddb *ddb_iterator_first(unsigned char table);
 extern struct Ddb *ddb_iterator_next(void);
 extern struct Ddb *ddb_find_key(unsigned char table, char *key);
+extern char *ddb_get_botname(char *botname);
 
 extern void ddb_splithubs(struct Client *cptr, unsigned char table, char *exitmsg);
 extern void ddb_reload(void);
