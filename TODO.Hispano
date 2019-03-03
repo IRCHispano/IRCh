@@ -1,0 +1,25 @@
+Cosas a realizar para IRC-Hispano / ChatHispano.
+------------------------------------------------
+
+1) Portar todo lo que hay funcionando en la red, con el correspondiente
+refactorización y mejoras. (EN CURSO)
+
+2) Ampliar el sistema de Logging para cumplir las necesidades de la red.
+(YA REALIZADO)
+
+3) Implementar opción de mandar al servidor de Mongo las conexiones de los
+usuarios a la red, las entradas/salidas de canales y las salidas/expulsiones
+de los usuarios de la red para liberar trabajo al service y aumentar la
+fiabilidad del sistema para cumplir la legislacion vigente y facilitar los
+requirimientos policiales/judiciales.
+
+4) Portar el sistema innovador de SPAM testeado en el ircd viejo al nuevo
+aprovechando al máximo las nuevas funcionalidades del nuevo.
+
+5) Ampliar el nuevo e innovador servicio de Autorización para que soporte DNSBL,
+paises prohibidos y demás condiciones para autorizar la entrada de los usuarios
+a la red.
+
+6) Implementar soporte de Websockets a partir del port de Unreal.
+
+7) API de IRC, a definir por la administración de la red.
