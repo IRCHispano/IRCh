@@ -125,7 +125,7 @@ int ms_dbq(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   }
 
   sendwallto_group_butone(&me, WALL_WALLOPS, 0,
-                   "Remote DBQ %c %s From %C", table, key, sptr);
+                   "Remote DBQ %c %s From %s", table, key, cli_name(sptr));
   log_write(LS_DDB, L_INFO, 0, "Remote DBQ %c %s From %C", table, key, sptr);
 
   if (!ddb_table_is_resident(table))
@@ -241,10 +241,6 @@ int mo_dbq(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
       }
     }
   }
-
-  sendwallto_group_butone(&me, WALL_WALLOPS, 0,
-                   "DBQ %c %s From %C", table, key, cptr);
-  log_write(LS_DDB, L_INFO, 0, "DBQ %c %s From %C", table, key, cptr);
 
   if (!ddb_table_is_resident(table))
   {
