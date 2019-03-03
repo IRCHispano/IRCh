@@ -26,6 +26,7 @@
 
 #include "IPcheck.h"
 #include "client.h"
+#include "ddb.h"
 #include "hash.h"
 #include "ircd.h"
 #include "ircd_chattr.h"
@@ -33,6 +34,7 @@
 #include "ircd_log.h"
 #include "ircd_reply.h"
 #include "ircd_string.h"
+#include "match.h"
 #include "msg.h"
 #include "numeric.h"
 #include "numnicks.h"
@@ -45,6 +47,8 @@
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <stdlib.h>
 #include <string.h>
+#include <json-c/json.h>
+#include <json-c/json_object.h>
 
  /*
 * 'do_nick_name' ensures that the given parameter (nick) is really a proper
@@ -60,12 +64,12 @@
 *  The '~'-character should be allowed, but a change should be global,
 *  some confusion would result if only few servers allowed it...
 */
-static int do_nick_name(char* nick)
+int do_nick_name(char* nick)
 {
   char* ch  = nick;
   char* end = ch + NICKLEN;
   assert(0 != ch);
-  
+
   /* first character in [0..9-] */
   if (*ch == '-' || IsDigit(*ch))
     return 0;
@@ -89,6 +93,12 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   char           nick[NICKLEN + 2];
   char*          arg;
   char*          s;
+  int            flags = 0;
+  int            random_nick = 0;
+#if defined(DDB)
+  struct Ddb *ddb;
+  char *p;
+#endif
 
   assert(0 != cptr);
   assert(cptr == sptr);
@@ -103,6 +113,41 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   }
 
+#if defined(DDB)
+  p = strchr(parv[1], ':');
+  if (p) {
+    /* nick:password  Support */
+    *p++ = '\0';
+    parc = 3;
+    parv[2] = p;
+
+  } else if ((p = strchr(parv[1], '!'))) {
+    /* GHOST nick!password  Support */
+    SetGhost(flags);
+    if (strlen(p) > 1) {
+      *p++ = '\0';
+      parc = 3;
+      parv[2] = p;
+    }
+
+  } else if (parc > 2 && (*parv[2] == '!')) {
+    /* GHOST nick !password  Support */
+    SetGhost(flags);
+    *parv[2]++ = '\0';
+  }
+#endif /* defined(DDB) */
+
+  /*
+   * Special CASE
+   * NICK *
+   * Random nickname
+   */
+  if (feature_bool(FEAT_ALLOW_RANDOM_NICKS) && (strlen(parv[1]) == 1) && (*parv[1] == '*'))
+  {
+    parv[1] = get_random_nick(sptr);
+    random_nick = 1;
+  }
+
   /*
    * Don't let them send make us send back a really long string of
    * garbage
@@ -111,8 +156,11 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (strlen(arg) > IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN)))
     arg[IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN))] = '\0';
 
+#if !defined(DDB)
+  /* ~ nicks support */
   if ((s = strchr(arg, '~')))
     *s = '\0';
+#endif
 
   strcpy(nick, arg);
 
@@ -124,20 +172,39 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   }
 
-  /* 
+  /*
    * Check if this is a LOCAL user trying to use a reserved (Juped)
    * nick, if so tell him that it's a nick in use...
    */
-  if (isNickJuped(nick)) {
-    send_reply(sptr, ERR_NICKNAMEINUSE, nick);
-    return 0;                        /* NICK message ignored */
+  if (!random_nick) {
+#if defined(DDB)
+    /* Jupe by DDB */
+    struct Ddb *ddbj;
+    for (ddbj = ddb_iterator_first(DDB_JUPEDB); ddbj; ddbj = ddb_iterator_next())
+    {
+      if (!match(ddb_key(ddbj), nick))
+      {
+        send_reply(sptr, SND_EXPLICIT | ERR_NICKNAMEINUSE, "%s :Nickname is juped: %s",
+           nick, ddb_content(ddbj));
+        return 0;                        /* NICK message ignored */
+      }
+
+      /* TODO: PCRE-Match Jupe */
+    }
+#endif /* defined(DDB) */
+
+    /* Jupe by conf */
+    if (isNickJuped(nick)) {
+      send_reply(sptr, ERR_NICKNAMEINUSE, nick);
+      return 0;                        /* NICK message ignored */
+    }
   }
 
   if (!(acptr = FindClient(nick))) {
     /*
      * No collisions, all clear...
      */
-    return set_nick_name(cptr, sptr, nick, parc, parv);
+    return set_nick_name(cptr, sptr, nick, parc, parv, flags);
   }
   if (IsServer(acptr)) {
     send_reply(sptr, ERR_NICKNAMEINUSE, nick);
@@ -156,11 +223,16 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
      * is concerned (user is changing the case of his/her
      * nickname or somesuch)
      */
+#if defined(DDB)
+    if (IsAccount(sptr) || IsNickSuspended(sptr))
+#endif
+      SetNickEquivalent(flags);
+
     if (0 != strcmp(cli_name(acptr), nick)) {
       /*
        * Allows change of case in his/her nick
        */
-      return set_nick_name(cptr, sptr, nick, parc, parv);
+      return set_nick_name(cptr, sptr, nick, parc, parv, flags);
     }
     /*
      * This is just ':old NICK old' type thing.
@@ -193,8 +265,85 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     ServerStats->is_ref++;
     IPcheck_connect_fail(acptr, 0);
     exit_client(cptr, acptr, &me, "Overridden by other sign on");
-    return set_nick_name(cptr, sptr, nick, parc, parv);
+    return set_nick_name(cptr, sptr, nick, parc, parv, flags);
   }
+
+#if defined(DDB)
+  /*
+   * GHOST through NICK nick!password Support
+   * Verify if nick is registered, if a local user, do not flooding
+   * and put a !
+   *
+   * If puts the correct password, kill to the user with ghost session and
+   * propagates the KILL by the network, and put the nick; in opposite case,
+   * follows and leave the nick not available message.
+   * --zoltan
+   */
+  if (IsGhost(flags)) {
+    char *passddb;
+    ddb = ddb_find_key(DDB_NICKDB, parv[1]);
+
+    if (ddb && (CurrentTime >= cli_nextnick(cptr))) {
+      char *passddb = NULL;
+      json_object *json, *json_pass;
+      enum json_tokener_error jerr = json_tokener_success;
+
+      json = json_tokener_parse_verbose(ddb_content(ddb), &jerr);
+      if (jerr == json_tokener_success) {
+        json_object_object_get_ex(json, "pass", &json_pass);
+        passddb = (char *)json_object_get_string(json_pass);
+      }
+
+      if (passddb) {
+        char *botname = ddb_get_botname(DDB_NICKSERV);
+
+        if (verify_pass_nick(ddb_key(ddb), passddb,
+                      (parc >= 3 ? parv[2] : cli_passwd(cptr)))) {
+          char nickwho[NICKLEN + 2];
+
+          SetIdentify(flags);
+
+          if (cli_name(cptr)[0] == '\0') {
+            /* Ghost during the establishment of the connection
+             * do not have old nick information, it is added ! to the nick
+             */
+            strncpy(nickwho, nick, sizeof(nickwho));
+            nickwho[strlen(nickwho)] = '!';
+
+          } else {
+            /* Set your older nick */
+            strncpy(nickwho, cli_name(cptr), sizeof(nickwho));
+          }
+
+          /* Kill user */
+          sendto_opmask_butone(0, SNO_SERVKILL,
+              "Received KILL message for %C. From %s, Reason: GHOST kill", acptr, nickwho);
+
+          sendcmdto_serv_butone(&me, CMD_KILL, acptr, "%C :GHOST session released by %s",
+              acptr, nickwho);
+
+          if (MyConnect(acptr)) {
+            sendcmdto_one(acptr, CMD_QUIT, cptr, ":Killed (GHOST session "
+                   "released by %s)", nickwho);
+            sendcmdto_one(&me, CMD_KILL, acptr, "%C :GHOST session released by %s",
+                   acptr, nickwho);
+          }
+          sendcmdbotto_one(botname, CMD_NOTICE, cptr, "%C :*** %C GHOST session has been "
+                   "released.", acptr, cptr);
+          exit_client_msg(cptr, acptr, &me, "Killed (GHOST session released by %s)",
+                    nickwho);
+
+          return set_nick_name(cptr, sptr, nick, parc, parv, flags);
+        } else {
+          sendcmdbotto_one(botname, CMD_NOTICE, cptr,
+                 "%C :*** Password incorrect.", cptr);
+          /* TODO: Contraseña incorrecta */
+        }
+      }
+    }
+  }
+#endif /* defined(DDB) */
+
   /*
    * NICK is coming from local client connection. Just
    * send error reply and ignore the command.
@@ -211,6 +360,7 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
  *
  * If from server, source is client:
  *   parv[2] = timestamp
+ *   parv[3] = umode (optional)
  *
  * Source is server:
  *   parv[2] = hopcount
@@ -248,12 +398,12 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (IsServer(sptr))
   {
     lastnick = atoi(parv[3]);
-    if (lastnick > OLDEST_TS && !IsBurstOrBurstAck(sptr)) 
+    if (lastnick > OLDEST_TS && !IsBurstOrBurstAck(sptr))
       cli_serv(sptr)->lag = TStime() - lastnick;
   }
   else
   {
-    lastnick = atoi(parv[2]); 
+    lastnick = atoi(parv[2]);
     if (lastnick > OLDEST_TS && !IsBurstOrBurstAck(sptr))
       cli_serv(cli_user(sptr)->server)->lag = TStime() - lastnick;
   }
@@ -266,7 +416,7 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   if (!do_nick_name(nick) || strcmp(nick, parv[1]))
   {
     send_reply(sptr, ERR_ERRONEUSNICKNAME, parv[1]);
-    
+
     ++ServerStats->is_kill;
     sendto_opmask_butone(0, SNO_OLDSNO, "Bad Nick: %s From: %s %C", parv[1],
 			 parv[0], cptr);
@@ -289,7 +439,7 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   /* Check against nick name collisions. */
   if ((acptr = FindClient(nick)) == NULL)
     /* No collisions, all clear... */
-    return set_nick_name(cptr, sptr, nick, parc, parv);
+    return set_nick_name(cptr, sptr, nick, parc, parv, 0);
 
   /*
    * If acptr == sptr, then we have a client doing a nick
@@ -301,7 +451,7 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   {
     if (strcmp(cli_name(acptr), nick) != 0)
       /* Allows change of case in his/her nick */
-      return set_nick_name(cptr, sptr, nick, parc, parv);
+      return set_nick_name(cptr, sptr, nick, parc, parv, 0);
     else
       /* Setting their nick to what it already is? Ignore it. */
       return 0;
@@ -323,7 +473,7 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     ServerStats->is_ref++;
     IPcheck_connect_fail(acptr, 0);
     exit_client(cptr, acptr, &me, "Overridden by other sign on");
-    return set_nick_name(cptr, sptr, nick, parc, parv);
+    return set_nick_name(cptr, sptr, nick, parc, parv, 0);
   }
   /*
    * Decide, we really have a nick collision and deal with it
@@ -436,5 +586,5 @@ int ms_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   if (sptr == NULL)
     return 0;
-  return set_nick_name(cptr, sptr, nick, parc, parv);
+  return set_nick_name(cptr, sptr, nick, parc, parv, 0);
 }

@@ -381,6 +381,13 @@ struct Message msgtab[] = {
     { m_unregistered, m_lusers, ms_lusers, m_lusers, m_ignore }
   },
   {
+    MSG_USERS,
+    TOK_USERS,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_unregistered, m_users, ms_users, m_users, m_ignore }
+  },
+  {
     MSG_TIME,
     TOK_TIME,
     0, MAXPARA, MFLG_SLOW, 0, NULL,
@@ -660,6 +667,48 @@ struct Message msgtab[] = {
     0, MAXPARA, MFLG_SLOW, 0, NULL,
     /* UNREG, CLIENT, SERVER, OPER, SERVICE */
     { m_unregistered, m_not_oper, ms_dbq, mo_dbq, m_ignore }
+  },
+  {
+    MSG_BMODE,
+    TOK_BMODE,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_ignore, m_ignore, ms_bmode, m_ignore, m_ignore }
+  },
+  {
+    MSG_GHOST,
+    TOK_GHOST,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_unregistered, m_ghost, m_ignore, m_ghost, m_ignore }
+  },
+  {
+    MSG_SVSNICK,
+    TOK_SVSNICK,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_ignore, m_ignore, ms_svsnick, m_ignore, m_ignore }
+  },
+  {
+    MSG_SVSMODE,
+    TOK_SVSMODE,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_ignore, m_ignore, ms_svsmode, m_ignore, m_ignore }
+  },
+  {
+    MSG_SVSJOIN,
+    TOK_SVSJOIN,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_ignore, m_ignore, ms_svsjoin, m_ignore, m_ignore }
+  },
+  {
+    MSG_SVSPART,
+    TOK_SVSPART,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { m_ignore, m_ignore, ms_svspart, m_ignore, m_ignore }
   },
 #endif
   /* This command is an alias for QUIT during the unregistered part of

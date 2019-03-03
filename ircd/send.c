@@ -125,7 +125,7 @@ kill_highest_sendq(int servers_too)
   {
     if (!LocalClientArray[i] || (!servers_too && cli_serv(LocalClientArray[i])))
       continue; /* skip servers */
-    
+
     /* If this sendq is higher than one we last saw, remember it */
     if (MsgQLength(&(cli_sendQ(LocalClientArray[i]))) > highest_sendq)
     {
@@ -339,6 +339,35 @@ void sendcmdto_one(struct Client *from, const char *cmd, const char *tok,
 
   msgq_clean(mb);
 }
+
+#if defined(DDB)
+/** Send a bot command to a single client.
+ * @param[in] botname Bot sending the command.
+ * @param[in] cmd Long name of command (used if \a to is a user).
+ * @param[in] tok Short name of command (used if \a to is a server).
+ * @param[in] to Destination of command.
+ * @param[in] pattern Format string for command arguments.
+ */
+void sendcmdbotto_one(const char *botname, const char *cmd, const char *tok,
+                      struct Client *to, const char *pattern, ...)
+{
+  struct VarData vd;
+  struct MsgBuf *mb;
+
+  to = cli_from(to);
+
+  vd.vd_format = pattern; /* set up the struct VarData for %v */
+  va_start(vd.vd_args, pattern);
+
+  mb = msgq_make(to, ":%s %s %v", botname, cmd, &vd);
+
+  va_end(vd.vd_args);
+
+  send_buffer(to, mb, 0);
+
+  msgq_clean(mb);
+}
+#endif /* defined(DDB) */
 
 /**
  * Send a (prefixed) command to a single client in the priority queue.
@@ -702,6 +731,47 @@ void sendcmdto_channel_servers_butone(struct Client *from, const char *cmd,
   msgq_clean(serv_mb);
 }
 
+#if defined(DDB)
+/** Send a bot command to all local users on a channel.
+ * @param[in] botname Bot sending the command.
+ * @param[in] cmd Long name of command.
+ * @param[in] tok Short name of command (ignored).
+ * @param[in] to Destination channel.
+ * @param[in] one Client direction to skip (or NULL).
+ * @param[in] skip Bitmask of SKIP_DEAF, SKIP_NONOPS, SKIP_NONVOICES indicating which clients to skip.
+ * @param[in] pattern Format string for command arguments.
+ */
+void sendcmdbotto_channel(const char *botname, const char *cmd,
+                          const char *tok, struct Channel *to,
+                          struct Client *one, unsigned int skip,
+                          const char *pattern, ...)
+{
+  struct VarData vd;
+  struct MsgBuf *mb;
+  struct Membership *member;
+
+  vd.vd_format = pattern; /* set up the struct VarData for %v */
+  va_start(vd.vd_args, pattern);
+
+  /* build the buffer */
+  mb = msgq_make(0, ":%s %s %v", botname, cmd, &vd);
+  va_end(vd.vd_args);
+
+  /* send the buffer to each local channel member */
+  for (member = to->members; member; member = member->next_member) {
+    if (!MyConnect(member->user)
+        || member->user == one
+        || IsZombie(member)
+        || (skip & SKIP_DEAF && IsDeaf(member->user))
+        || (skip & SKIP_NONOPS && /* !IsChanOwner(member) &&*/ !IsChanOp(member))
+        || (skip & SKIP_NONVOICES && /* !IsChanOwner(member) &&*/ !IsChanOp(member) && !HasVoice(member)))
+        continue;
+      send_buffer(member->user, mb, 0);
+  }
+
+  msgq_clean(mb);
+}
+#endif /* defined(DDB) */
 
 /** Send a (prefixed) command to all users on this channel, except for
  * \a one and those matching \a skip.

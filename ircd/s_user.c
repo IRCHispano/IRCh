@@ -39,6 +39,7 @@
 #include "ircd_snprintf.h"
 #include "ircd_ssl.h"
 #include "ircd_string.h"
+#include "ircd_tea.h"
 #include "list.h"
 #include "match.h"
 #include "monitor.h"
@@ -404,6 +405,7 @@ int register_user(struct Client *cptr, struct Client *sptr)
 #endif
 
     m_lusers(sptr, sptr, 1, parv);
+    m_users(sptr, sptr, 1, parv);
     update_load();
     motd_signon(sptr);
     if (cli_snomask(sptr) & SNO_NOISY)
@@ -459,7 +461,7 @@ int register_user(struct Client *cptr, struct Client *sptr)
    * account assignment causes a numeric reply during registration.
    */
   if (HasHiddenHost(sptr))
-    hide_hostmask(sptr, FLAG_HIDDENHOST);
+    hide_hostmask(sptr, 0, FLAG_HIDDENHOST);
   if (IsInvisible(sptr))
     ++UserStats.inv_clients;
   if (IsOper(sptr))
@@ -550,6 +552,104 @@ static const struct UserMode {
 /** Nasty global buffer used for communications with umode_str() and others. */
 static char umodeBuf[BUFSIZE];
 
+#if defined(DDB)
+/** Verify the passwords
+ * @param[in] nick Nickname
+ * @param[in] cryptpass Crypt password
+ * @param[in] password Password
+ * @return 1 if a correct password, else 0.
+ */
+int verify_pass_nick(char *nick, char *cryptpass, char *pass)
+{
+  unsigned int v[2], k[2], x[2];
+  int nicklen = strlen(nick);
+#if 1 /* TODO: TRANSICION IRC-HISPANO */
+  int cont=(nicklen < 16) ? 2 : ((nicklen + 8) / 8);
+#else
+  int cont = ((nicklen + 8) / 8);
+#endif
+  char tmpnick[8 * cont + 1];
+  char tmppass[12 + 1];
+  unsigned int *p = (unsigned int *)tmpnick;    /* int == 32bits */
+  unsigned int numpass[2];
+
+  memset(tmpnick, 0, sizeof(tmpnick));
+  strncpy(tmpnick, nick, sizeof(tmpnick) - 1);
+
+  memset(tmppass, 0, sizeof(tmppass));
+  strncpy(tmppass, cryptpass, sizeof(tmppass) - 1);
+
+  numpass[1] = base64toint(tmppass + 6);
+  tmppass[6] = '\0';
+  numpass[0] = base64toint(tmppass);
+
+  memset(tmppass, 0, sizeof(tmppass));
+
+  strncpy(tmppass, pass, sizeof(tmppass) - 1);
+
+  /* filling   ->   123456789012 */
+  strncat(tmppass, "AAAAAAAAAAAA", sizeof(tmppass) - strlen(tmppass) - 1);
+
+  x[0] = x[1] = 0;
+
+  k[1] = base64toint(tmppass + 6);
+  tmppass[6] = '\0';
+  k[0] = base64toint(tmppass);
+
+  while (cont--)
+  {
+    v[0] = ntohl(*p++);         /* 32 bits */
+    v[1] = ntohl(*p++);         /* 32 bits */
+    ircd_tea(v, k, x);
+  }
+
+  if ((x[0] == numpass[0]) && (x[1] == numpass[1]))
+    return 1;
+
+  return 0;
+}
+#endif /* defined(DDB) */
+
+/** Get a random nickname.
+*
+* @param[in] cptr Client's requested nickname.
+* @return A new nick.
+*/
+char *get_random_nick(struct Client* cptr)
+{
+  struct Client* acptr;
+  static char*   newnick;
+  char           nickout[NICKLEN + 1];
+  unsigned int   v[2], k[2], x[2];
+
+  k[0] = k[1] = x[0] = x[1] = 0;
+
+  v[0] = base64toint(cli_yxx(cptr));
+  v[1] = base64toint(cli_yxx(&me));
+
+  acptr = cptr;
+
+  do
+  {
+    ircd_tea(v, k, x);
+    v[1] += 4096;
+
+    if (x[0] >= 4294000000ul)
+      continue;
+
+    ircd_snprintf(0, nickout, sizeof(nickout), "%s%.6d",
+                  feature_str(FEAT_PREFIX_RANDOM_NICKS), (int)(x[0] % 1000000));
+
+    nickout[NICKLEN] = '\0';
+    newnick = nickout;
+
+    acptr = FindUser(newnick);
+  }
+  while (acptr);
+
+  return newnick;
+}
+
 /** Try to set a user's nickname.
  * If \a sptr is a server, the client is being introduced for the first time.
  * @param[in] cptr Client to set nickname.
@@ -557,10 +657,11 @@ static char umodeBuf[BUFSIZE];
  * @param[in] nick New nickname.
  * @param[in] parc Number of arguments to NICK.
  * @param[in] parv Argument list to NICK.
+ * @param[in] flags Flags of the nick.
  * @return CPTR_KILLED if \a cptr was killed, else 0.
  */
 int set_nick_name(struct Client* cptr, struct Client* sptr,
-                  const char* nick, int parc, char* parv[])
+                  const char* nick, int parc, char* parv[], int flags)
 {
   if (IsServer(sptr)) {
 
@@ -596,6 +697,8 @@ int set_nick_name(struct Client* cptr, struct Client* sptr,
     ircd_strncpy(cli_info(new_client), parv[parc - 1], REALLEN);
 
     Count_newremoteclient(UserStats, sptr);
+    if (IsService(cli_user(new_client)->server))
+      ++UserStats.services;
 
     if (parc > 7 && *parv[6] == '+') {
       /* (parc-4) -3 for the ip, numeric nick, realname */
@@ -881,8 +984,9 @@ void send_umode_out(struct Client *cptr, struct Client *sptr,
   for (i = HighestFd; i >= 0; i--)
   {
     if ((acptr = LocalClientArray[i]) && IsServer(acptr) &&
-        (acptr != cptr) && (acptr != sptr) && *umodeBuf)
+        (acptr != cptr) && (acptr != sptr) && *umodeBuf) {
       sendcmdto_one(sptr, CMD_MODE, acptr, "%s :%s", cli_name(sptr), umodeBuf);
+    }
   }
   if (cptr && MyUser(cptr))
     send_umode(cptr, sptr, old, ALL_UMODES);
@@ -929,7 +1033,7 @@ void send_user_info(struct Client* sptr, char* names, int rpl, InfoFormatter fmt
  * @return Zero.
  */
 int
-hide_hostmask(struct Client *cptr, unsigned int flag)
+hide_hostmask(struct Client *cptr, const char *vhost, unsigned int flag)
 {
   struct Membership *chan;
 
@@ -1001,11 +1105,11 @@ hide_hostmask(struct Client *cptr, unsigned int flag)
  * @param[in] sptr Source (originator) of the mode change.
  * @param[in] parc Number of parameters in \a parv.
  * @param[in] parv Parameters to MODE.
- * @param[in] allow_modes ALLOWMODES_ANY for any mode, ALLOWMODES_DEFAULT for 
+ * @param[in] allow_modes ALLOWMODES_ANY for any mode, ALLOWMODES_DEFAULT for
  *                        only permitting legitimate default user modes.
  * @return Zero.
  */
-int set_user_mode(struct Client *cptr, struct Client *sptr, int parc, 
+int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
 		char *parv[], int allow_modes)
 {
   char** p;
@@ -1019,6 +1123,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
   int prop = 0;
   int do_host_hiding = 0;
   char* account = NULL;
+  int svsmode = 0;
 
   what = MODE_ADD;
 
@@ -1040,6 +1145,9 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
       send_reply(sptr, RPL_SNOMASK, cli_snomask(sptr), cli_snomask(sptr));
     return 0;
   }
+
+  if (MyUser(sptr) && (allow_modes & ALLOWMODES_SVSMODE))
+    svsmode = 1;
 
   /*
    * find flags already set for user
@@ -1232,7 +1340,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
    * Evaluate rules for new user mode
    * Stop users making themselves operators too easily:
    */
-  if (!IsServer(cptr))
+  if (!IsServer(cptr) && !svsmode)
   {
     if (!FlagHas(&setflags, FLAG_OPER) && IsOper(sptr))
       ClearOper(sptr);
@@ -1316,6 +1424,7 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
    * Compare new flags with old flags and send string which
    * will cause servers to update correctly.
    */
+#if !defined(DDB)
   if (!FlagHas(&setflags, FLAG_ACCOUNT) && IsAccount(sptr)) {
       int len = ACCOUNTLEN;
       char *ts;
@@ -1328,8 +1437,9 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
       }
       ircd_strncpy(cli_user(sptr)->account, account, len);
   }
+#endif
   if (!FlagHas(&setflags, FLAG_HIDDENHOST) && do_host_hiding && allow_modes != ALLOWMODES_DEFAULT)
-    hide_hostmask(sptr, FLAG_HIDDENHOST);
+    hide_hostmask(sptr, 0, FLAG_HIDDENHOST);
 
   if (IsRegistered(sptr)) {
     if (!FlagHas(&setflags, FLAG_OPER) && IsOper(sptr)) {
@@ -1452,7 +1562,7 @@ void send_umode(struct Client *cptr, struct Client *sptr, struct Flags *old,
     case SEND_UMODES:
       if (flag < FLAG_GLOBAL_UMODES)
         continue;
-      break;      
+      break;
     }
     if (FlagHas(old, flag))
     {

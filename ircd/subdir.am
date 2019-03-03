@@ -138,11 +138,16 @@ ircd_ircd_SOURCES = \
 	ircd/m_squit.c \
 	ircd/m_stats.c \
 	ircd/m_starttls.c \
+	ircd/m_svsnick.c \
+	ircd/m_svsjoin.c \
+	ircd/m_svsmode.c \
+	ircd/m_svspart.c \
 	ircd/m_time.c \
 	ircd/m_topic.c \
 	ircd/m_trace.c \
 	ircd/m_uping.c \
 	ircd/m_user.c \
+	ircd/m_users.c \
 	ircd/m_userhost.c \
 	ircd/m_userip.c \
 	ircd/m_version.c \
@@ -190,8 +195,10 @@ ircd_ircd_SOURCES += \
 	ircd/ddb_db_native.c \
 	ircd/ddb_events.c \
 	ircd/ircd_tea.c \
+	ircd/m_bmode.c \
 	ircd/m_db.c \
-	ircd/m_dbq.c
+	ircd/m_dbq.c \
+	ircd/m_ghost.c
 endif
 	
 if ENGINE_POLL

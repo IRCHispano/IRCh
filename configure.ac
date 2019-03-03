@@ -380,6 +380,14 @@ if test x"$unet_cv_enable_ssl" = xyes; then
   fi
 fi
 
+dnl Let's find the library containing json...
+AC_SEARCH_LIBS([json_object_object_get_ex], [json-c json], [], [])
+if test x"$ac_cv_search_json_object_object_get_ex" = xno; then
+    AC_MSG_ERROR([Json not found, required. Install libjson-c-dev])
+fi
+
+CFLAGS="$CFLAGS -I/usr/include/json-c"
+
 dnl Should we force inlines?
 unet_TOGGLE([inlines], yes, [Disable inlining for a few critical functions],
     [whether to enable inlining for a few critical functions])

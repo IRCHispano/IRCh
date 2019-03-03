@@ -60,6 +60,13 @@ extern void sendcmdto_one(struct Client *from, const char *cmd,
 			  const char *tok, struct Client *to,
 			  const char *pattern, ...);
 
+#if defined(DDB)
+/* Send a bot command to one client */
+extern void sendcmdbotto_one(const char *botname, const char *cmd,
+                             const char *tok, struct Client *to,
+                             const char *pattern, ...);
+#endif
+
 /* Same as above, except it puts the message on the priority queue */
 extern void sendcmdto_prio_one(struct Client *from, const char *cmd,
 			       const char *tok, struct Client *to,
@@ -119,6 +126,14 @@ extern void sendcmdto_channel_servers_butone(struct Client *from,
                                              struct Client *one,
                                              unsigned int skip,
                                              const char *pattern, ...);
+
+#if defined(DDB)
+/* Send bot command to all channel users on this server */
+extern void sendcmdbotto_channel(const char *botmode, const char *cmd,
+                                 const char *tok, struct Channel *to,
+                                 struct Client *one, unsigned int skip,
+                                 const char *pattern, ...);
+#endif
 
 /* Send command to all interested channel users */
 extern void sendcmdto_channel_butone(struct Client *from, const char *cmd,

@@ -74,6 +74,26 @@ struct Flags;
 /* used for parsing user modes */
 #define ALLOWMODES_ANY	0 /**< Allow any user mode */
 #define ALLOWMODES_DEFAULT  1 /**< Only allow the subset of modes that are legit defaults */
+#define ALLOWMODES_SVSMODE 2 /**< Allow any user mode to be changed ignoring restrictions */
+
+/* used in set_nick_name */
+#define NICK_EQUIVALENT 0x01    /** < Equivalent */
+#define NICK_RENAMED    0x02    /** < Rename */
+#if defined(DDB)
+#define NICK_GHOST      0x04    /** < Ghost */
+#define NICK_IDENTIFY   0x08    /** < Identify */
+#endif /* defined(DDB) */
+
+#define SetNickEquivalent(x)    ((x) |= NICK_EQUIVALENT)
+#define IsNickEquivalent(x)     ((x) & NICK_EQUIVALENT)
+#define SetRenamed(x)           ((x) |= NICK_RENAMED)
+#define IsRenamed(x)            ((x) & NICK_RENAMED)
+#if defined(DDB)
+#define SetGhost(x)             ((x) |= NICK_GHOST)
+#define IsGhost(x)              ((x) & NICK_GHOST)
+#define SetIdentify(x)          ((x) |= NICK_IDENTIFY)
+#define IsIdentify(x)           ((x) & NICK_IDENTIFY)
+#endif /* defined(DDB) */
 
 /** Formatter function for send_user_info().
  * @param who Client being displayed.
@@ -91,8 +111,13 @@ extern int          register_user(struct Client* cptr, struct Client *sptr);
 
 extern void         user_count_memory(size_t* count_out, size_t* bytes_out);
 
+#if defined(DDB)
+extern int verify_pass_nick(char *nick, char *cryptpass, char *pass);
+#endif
+extern int do_nick_name(char* nick);
+extern char *get_random_nick(struct Client* cptr);
 extern int set_nick_name(struct Client* cptr, struct Client* sptr,
-                         const char* nick, int parc, char* parv[]);
+                         const char* nick, int parc, char* parv[], int flags);
 extern void send_umode_out(struct Client* cptr, struct Client* sptr,
                           struct Flags* old, int prop);
 extern int whisper(struct Client* source, const char* nick,
@@ -100,7 +125,7 @@ extern int whisper(struct Client* source, const char* nick,
 extern void send_user_info(struct Client* to, char* names, int rpl,
                            InfoFormatter fmt);
 
-extern int hide_hostmask(struct Client *cptr, unsigned int flags);
+extern int hide_hostmask(struct Client *cptr, const char *vhost, unsigned int flags);
 extern int set_user_mode(struct Client *cptr, struct Client *sptr,
                          int parc, char *parv[], int allow_modes);
 extern int is_silenced(struct Client *sptr, struct Client *acptr);

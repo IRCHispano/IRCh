@@ -226,6 +226,10 @@ struct Client;
 #define TOK_LUSERS              "LU"
 #define CMD_LUSERS		MSG_LUSERS, TOK_LUSERS
 
+#define MSG_USERS              "USERS"        /* USE */
+#define TOK_USERS              "US"
+#define CMD_USERS              MSG_USERS, TOK_USERS
+
 #define MSG_MOTD                "MOTD"          /* MOTD */
 #define TOK_MOTD                "MO"
 #define CMD_MOTD		MSG_MOTD, TOK_MOTD
@@ -393,6 +397,31 @@ struct Client;
 #define MSG_DBQ                 "DBQ"           /* DBQ */
 #define TOK_DBQ                 "DBQ"
 #define CMD_DBQ                 MSG_DBQ, TOK_DBQ
+
+#define MSG_BMODE		"BMODE"		/* BMODE */
+#define TOK_BMODE		"BM"
+#define CMD_BMODE		MSG_BMODE, TOK_BMODE
+
+#define MSG_GHOST               "GHOST"         /* GHOST */
+#define TOK_GHOST               "GHOST"
+#define CMD_GHOST               MSG_GHOST, TOK_GHOST
+
+#define MSG_SVSNICK             "SVSNICK"       /* SVSN */
+#define TOK_SVSNICK             "SN"
+#define CMD_SVSNICK             MSG_SVSNICK, TOK_SVSNICK
+
+#define MSG_SVSMODE             "SVSMODE"
+#define TOK_SVSMODE             "SM"
+#define CMD_SVSMODE             MSG_SVSMODE, TOK_SVSMODE
+
+#define MSG_SVSJOIN             "SVSJOIN"
+#define TOK_SVSJOIN             "SJ"
+#define CMD_SVSJOIN             MSG_SVSJOIN, TOK_SVSJOIN
+
+#define MSG_SVSPART             "SVSPART"
+#define TOK_SVSPART             "SL"
+#define CMD_SVSPART             MSG_SVSPART, TOK_SVSPART
+
 /*
  * Constants
  */
