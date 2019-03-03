@@ -1,8 +1,8 @@
 /*
- * IRC-Hispano IRC Daemon, ircd/m_svsnick.c
+ * IRC-Hispano IRC Daemon, ircd/m_svsmode.c
  *
  * Copyright (C) 1997-2019 IRC-Hispano Development Team <toni@tonigarcia.es>
- * Copyright (C) 2004 Toni Garcia (zoltan) <toni@tonigarcia.es>
+ * Copyright (C) 2008 Toni Garcia (zoltan) <toni@tonigarcia.es>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,32 +20,31 @@
  *
  */
 /** @file
- * @brief Handlers for SVSNICK command.
+ * @brief Handlers for SVSMODE command.
  */
 #include "config.h"
 
+#include "channel.h"
 #include "client.h"
-#include "ddb.h"
 #include "hash.h"
 #include "ircd.h"
-#include "ircd_features.h"
 #include "ircd_log.h"
+#include "ircd_reply.h"
 #include "ircd_snprintf.h"
 #include "ircd_string.h"
-#include "ircd_tea.h"
 #include "msg.h"
+#include "numeric.h"
 #include "numnicks.h"
 #include "s_conf.h"
 #include "s_user.h"
 #include "send.h"
-#include "sys.h"
 
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <stdio.h>
 #include <string.h>
 
 
-/** Handle a SVSNICK command from a server.
+/** Handle a SVSMODE command from a server.
  * See @ref m_functions for general discussion of parameters.
  *
  * \a parv[1] is a nick
@@ -56,31 +55,26 @@
  * @param[in] parc Number of arguments.
  * @param[in] parv Argument vector.
  */
-int ms_svsnick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
+int ms_svsmode(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   struct Client *acptr;
-  struct Client *bcptr;
-  char newnick[NICKLEN + 2];
-  char *arg;
-  int flags = 0;
 
   assert(0 != IsServer(cptr));
 
-  if (parc == 2)
-  {
-    parv[2] = "*";
-    parc = 3;
-  }
-  else if (parc < 2)
+  if (parc < 3)
+    return 0;
+
+  /* Not support for channels */
+  if (IsChannelName(parv[1]))
     return 0;
 
   if (!find_conf_byhost(cli_confs(cptr), cli_name(sptr), CONF_UWORLD))
   {
     sendcmdto_serv_butone(&me, CMD_DESYNCH, 0,
-                   ":HACK(2): Fail SVSNICK for %s. From %s",
+                   ":HACK(2): Fail SVSMODE for %s. From %s",
                    parv[1], cli_name(sptr));
     sendto_opmask_butone(0, SNO_HACK2,
-                  "Fail SVSNICK for %s. From %C", parv[1], sptr);
+                  "Fail SVSMODE for %s. From %C", parv[1], sptr);
     return 0;
   }
 
@@ -91,48 +85,21 @@ int ms_svsnick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
 
   if (!MyUser(acptr)) {
-    sendcmdto_one(sptr, CMD_SVSNICK, cptr, "%s %s", parv[1], parv[2]);
+    sendcmdto_one(sptr, CMD_SVSMODE, cptr, "%s %s", parv[1], parv[2]);
     return 0;
   }
 
-  if (ircd_strcmp(parv[2], "*"))
-  {
-    /*
-     * Don't let them send make us send back a really long string of
-     * garbage
-     */
-    arg = parv[2];
-    if (strlen(arg) > IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN)))
-      arg[IRCD_MIN(NICKLEN, feature_int(FEAT_NICKLEN))] = '\0';
-
-    strcpy(newnick, arg);
-
-    if (0 == do_nick_name(newnick))
-      return 0;
-
-    if (FindUser(newnick))
-      return 0;
-  }
-  else
-    strcpy(newnick, get_random_nick(acptr));
-
   sendcmdto_serv_butone(&me, CMD_DESYNCH, 0,
-                 ":HACK(4): SVSNICK for %s, new nick %s. From %s",
-                 cli_name(acptr), newnick, cli_name(sptr));
+                 ":HACK(4): SVSMODE for %s, mode %s. From %s",
+                 cli_name(acptr), parv[2], cli_name(sptr));
   sendto_opmask_butone(0, SNO_HACK4,
-       "SVSNICK for %C, new nick %s. From %C", acptr, newnick, sptr);
+                "SVSMODE for %C, mode %s. From %C", acptr, parv[2], sptr);
 
-  if (!MyUser(acptr))
-    SetRenamed(flags);
 
   parv[0] = cli_name(acptr);
-  parv[1] = newnick;
-  {
-     char tmp[100];
-     ircd_snprintf(0, tmp, sizeof(tmp), "%T", CurrentTime);
-     parv[2] = tmp;
-  }
+  parv[1] = cli_name(acptr);
 
-  return set_nick_name(acptr, acptr, newnick, 3, parv, flags);
+  set_user_mode(acptr, acptr, 3, parv, ALLOWMODES_ANY | ALLOWMODES_SVSMODE);
 
+  return 0;
 }

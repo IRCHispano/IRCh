@@ -75,7 +75,8 @@ int ms_svsjoin(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
   if (!find_conf_byhost(cli_confs(cptr), cli_name(sptr), CONF_UWORLD)) {
     sendcmdto_serv_butone(&me, CMD_DESYNCH, 0,
-                   ":HACK(2): Fail SVSJOIN for %s. From %C", parv[1], sptr);
+                   ":HACK(2): Fail SVSJOIN for %s. From %s",
+                   parv[1], cli_name(sptr));
     sendto_opmask_butone(0, SNO_HACK2,
                   "Fail SVSJOIN for %s. From %C", parv[1], sptr);
     return 0;
@@ -95,8 +96,11 @@ int ms_svsjoin(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   }
 
+  sendcmdto_serv_butone(&me, CMD_DESYNCH, 0,
+                 ":HACK(4): SVSJOIN for %s, channels %s. From %s",
+                 cli_name(acptr), parv[2], cli_name(sptr));
   sendto_opmask_butone(0, SNO_HACK4,
-       "SVSJOIN for %C, channels %s. From %C", acptr, parv[2], sptr);
+                "SVSJOIN for %C, channels %s. From %C", acptr, parv[2], sptr);
 
   joinbuf_init(&join, acptr, &me, JOINBUF_TYPE_JOIN, 0, 0);
   joinbuf_init(&create, acptr, &me, JOINBUF_TYPE_CREATE, 0, TStime());
