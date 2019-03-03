@@ -110,7 +110,7 @@ show_usage(struct Client *sptr)
              "matching \037pattern\037. ");
   send_reply(sptr, RPL_LISTUSAGE, "Note: Patterns may contain * and ?. "
              "You may only give one pattern match constraint.");
-  if (IsAnOper(sptr)) {
+  if (HasPriv(sptr, PRIV_LIST_CHAN)) {
     send_reply(sptr, RPL_LISTUSAGE,
                " \002S\002             ; Show secret channels.");
     send_reply(sptr, RPL_LISTUSAGE,
@@ -170,7 +170,7 @@ param_parse(struct Client *sptr, const char *param, struct ListingArgs *args,
         val = TStime() - val * 60;
         dir = (dir == '>') ? '<' : '>';
       }
-      
+
       switch (is_time) {
       case 0: /* number of users on channel */
 	if (dir == '<')
@@ -245,7 +245,7 @@ param_parse(struct Client *sptr, const char *param, struct ListingArgs *args,
         tmp2 = strchr(param, ' ');
         if (tmp2 && (!tmp1 || (tmp2 < tmp1)))
           tmp1 = tmp2;
-        
+
         if (tmp1)
           *tmp1++ = 0;
 

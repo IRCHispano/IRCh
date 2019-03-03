@@ -46,54 +46,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/** Searches for and handles a 0 in a join list.
- * @param[in] cptr Client that sent us the message.
- * @param[in] sptr Original source of message.
- * @param[in] chanlist List of channels to join.
- * @return First token in \a chanlist after the final 0 entry, which
- * may be its nul terminator (if the final entry is a 0 entry).
- */
-static char *
-last0(struct Client *cptr, struct Client *sptr, char *chanlist)
-{
-  char *p;
-  int join0 = 0;
-
-  for (p = chanlist; p[0]; p++) /* find last "JOIN 0" */
-    if (p[0] == '0' && (p[1] == ',' || p[1] == '\0')) {
-      if (p[1] == ',')
-        p++;
-      chanlist = p + 1;
-      join0 = 1;
-    } else {
-      while (p[0] != ',' && p[0] != '\0') /* skip past channel name */
-	p++;
-
-      if (!p[0]) /* hit the end */
-	break;
-    }
-
-  if (join0) {
-    struct JoinBuf part;
-    struct Membership *member;
-
-    joinbuf_init(&part, sptr, cptr, JOINBUF_TYPE_PARTALL,
-                 "Left all channels", 0);
-
-    joinbuf_join(&part, 0, 0);
-
-    while ((member = cli_user(sptr)->channel))
-      joinbuf_join(&part, member->channel,
-                   IsZombie(member) ? CHFL_ZOMBIE :
-                   IsDelayedJoin(member) ? CHFL_DELAYED :
-                   0);
-
-    joinbuf_flush(&part);
-  }
-
-  return chanlist;
-}
-
 /** Handle a JOIN message from a client connection.
  * See @ref m_functions for discussion of the arguments.
  * @param[in] cptr Client that sent us the message.

@@ -314,6 +314,9 @@ struct ModeBuf {
   struct Client	       *mb_source;	/**< Source of MODE changes */
   struct Client	       *mb_connect;	/**< Connection of MODE changes */
   struct Channel       *mb_channel;	/**< Channel they affect */
+#if defined(DDB)
+  char		       *mb_botname;	/**< Nick Bot of MODE changes */
+#endif
   unsigned int		mb_dest;	/**< Destination of MODE changes */
   unsigned int		mb_count;	/**< Number of modes w/args */
   struct {
@@ -341,6 +344,9 @@ struct ModeBuf {
 #define MODEBUF_DEST_HACK4	0x08000	/**< Send a HACK(4) notice, TS == 0 */
 
 #define MODEBUF_DEST_NOKEY	0x10000	/**< Don't send the real key */
+#if defined(DDB)
+#define MODEBUF_DEST_BOTMODE	0x20000	/**< Mode send by Bot */
+#endif
 
 #define MB_TYPE(mb, i)		((mb)->mb_modeargs[(i)].mbm_type)
 #define MB_UINT(mb, i)		((mb)->mb_modeargs[(i)].mbm_arg.mbma_uint)
@@ -457,6 +463,7 @@ extern void joinbuf_init(struct JoinBuf *jbuf, struct Client *source,
 extern void joinbuf_join(struct JoinBuf *jbuf, struct Channel *chan,
 			 unsigned int flags);
 extern int joinbuf_flush(struct JoinBuf *jbuf);
+extern char *last0(struct Client *cptr, struct Client *sptr, char *chanlist);
 extern struct Ban *make_ban(const char *banstr);
 extern struct Ban *find_ban(struct Client *cptr, struct Ban *banlist);
 extern int apply_ban(struct Ban **banlist, struct Ban *newban, int free);

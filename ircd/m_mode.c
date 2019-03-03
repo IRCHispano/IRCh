@@ -136,7 +136,7 @@ ms_mode(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     }
     else if (sptr != acptr)
     {
-      sendwallto_group_butone(&me, WALL_WALLOPS, 0, 
+      sendwallto_group_butone(&me, WALL_WALLOPS, 0,
                               "MODE for User %s from %s!%s", parv[1],
                               cli_name(cptr), cli_name(sptr));
       return 0;
