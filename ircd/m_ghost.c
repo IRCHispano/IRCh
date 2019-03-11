@@ -38,8 +38,6 @@
 
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <string.h>
-#include <json-c/json.h>
-#include <json-c/json_object.h>
 
 /** Handle a GHOST command from a client.
  * See @ref m_functions for general discussion of parameters.
@@ -57,11 +55,8 @@
 int m_ghost(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 {
   struct Client *acptr;
-  struct Ddb *ddb;
-  json_object *json, *json_flags, *json_pass;
-  enum json_tokener_error jerr = json_tokener_success;
-  char *passddb, *passwd, *botname;
-  int flagsddb = 0;
+  struct DdbNick *ddbnick;
+  char *passwd, *botname;
 
   assert(0 != cptr);
   assert(sptr == cptr);
@@ -100,33 +95,28 @@ int m_ghost(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     return 0;
   }
 
-  if (!(ddb = ddb_find_key(DDB_NICKDB, parv[1])))
+  if (!(ddbnick = ddb_nick_find(parv[1])))
   {
     sendcmdbotto_one(botname, CMD_NOTICE, cptr,
                      "%C :*** The nick %s is not registered.", cptr, parv[1]);
     return 0;
   }
 
-  json = json_tokener_parse_verbose(ddb_content(ddb), &jerr);
-  if (jerr != json_tokener_success) {
+  if (ddbnick->flags & DDB_NICK_FORBID) {
       sendcmdbotto_one(botname, CMD_NOTICE, cptr,
-                       "%C :*** The nick %s is prohibited.", cptr, parv[1]);
+                       "%C :*** The nick %s is prohibited. Reason: %s",
+                       cptr, parv[1], ddbnick->reason ? ddbnick->reason : "");
       return 0;
   }
 
-  json_object_object_get_ex(json, "flags", &json_flags);
-  flagsddb = json_object_get_int(json_flags);
-  if (flagsddb) {
+  if (ddbnick->flags & DDB_NICK_SUSPEND) {
       sendcmdbotto_one(botname, CMD_NOTICE, cptr,
-                       "%C :*** The nick %s is %s.", cptr, parv[1],
-                       flagsddb == 2 ? "suspended" : "prohibited");
+                       "%C :*** The nick %s is suspended. Reason: %s",
+                       cptr, parv[1], ddbnick->reason ? ddbnick->reason : "");
       return 0;
   }
 
-  json_object_object_get_ex(json, "pass", &json_pass);
-  passddb = (char *)json_object_get_string(json_pass);
-
-  if (!(verify_pass_nick(ddb_key(ddb), passddb, passwd)))
+  if (!(verify_pass_nick(ddbnick->name, ddbnick->password, passwd)))
   {
     sendcmdbotto_one(botname, CMD_NOTICE, cptr,
                      "%C :*** Password incorrect.", cptr);

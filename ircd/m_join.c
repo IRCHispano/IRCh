@@ -164,8 +164,8 @@ int m_join(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
        * he otherwise could not join by using "OVERRIDE" as the key.
        * This will generate a HACK(4) notice, but fails if the oper
        * could normally join the channel. */
-      if (IsLocalChannel(chptr->chname)
-          && HasPriv(sptr, PRIV_WALK_LCHAN)
+      if (((IsLocalChannel(chptr->chname) && HasPriv(sptr, PRIV_WALK_LCHAN)) ||
+          (!IsLocalChannel(chptr->chname) && HasPriv(sptr, PRIV_WALK_CHAN)))
           && !(flags & CHFL_CHANOP)
           && key && !strcmp(key, "OVERRIDE"))
       {

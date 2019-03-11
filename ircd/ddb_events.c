@@ -36,6 +36,7 @@
 #include "ircd_tea.h"
 #include "msg.h"
 #include "numnicks.h"
+#include "querycmds.h"
 #include "s_user.h"
 #include "send.h"
 
@@ -51,6 +52,8 @@ ddb_events_table_td ddb_events_table[DDB_TABLE_MAX];
 
 static void ddb_events_table_features(char *key, char *content, int update);
 static void ddb_events_table_logging(char *key, char *content, int update);
+static void ddb_events_table_nicks(char *key, char *content, int update);
+static void ddb_events_table_operators(char *key, char *content, int update);
 
 /** Initialize events module of %DDB Distributed DataBases.
  */
@@ -69,8 +72,8 @@ ddb_events_init(void)
   ddb_events_table[DDB_JUPEDB] = 0; //ddb_events_table_jupes;
   ddb_events_table[DDB_LOGGINGDB] = ddb_events_table_logging;
   ddb_events_table[DDB_MOTDDB] = 0;
-  ddb_events_table[DDB_NICKDB] = 0; //ddb_events_table_nicks;
-  ddb_events_table[DDB_OPERDB] = 0; //ddb_events_table_operators;
+  ddb_events_table[DDB_NICKDB] = ddb_events_table_nicks;
+  ddb_events_table[DDB_OPERDB] = ddb_events_table_operators;
   ddb_events_table[DDB_PSEUDODB] = 0; //ddb_events_table_pseudo;
   ddb_events_table[DDB_QUARANTINEDB] = 0; //ddb_events_table_quarantines;
   ddb_events_table[DDB_CHANREDIRECTDB] = 0;
@@ -89,30 +92,10 @@ ddb_events_init(void)
 static void
 ddb_events_table_features(char *key, char *content, int update)
 {
-  static char *keytemp = NULL;
-  static int key_len = 0;
-  int i = 0;
-
-  if ((strlen(key) + 1 > key_len) || (!keytemp))
-  {
-    key_len = strlen(key) + 1;
-    if (keytemp)
-      MyFree(keytemp);
-    keytemp = MyMalloc(key_len);
-
-    assert(0 != keytemp);
-  }
-  strcpy(keytemp, key);
-  while (keytemp[i])
-  {
-    keytemp[i] = ToUpper(keytemp[i]);
-    i++;
-  }
-
   if (content)
   {
     char *tempa[2];
-    tempa[0] = keytemp;
+    tempa[0] = key;
     tempa[1] = content;
 
     feature_set(&me, (const char * const *)tempa, 2);
@@ -120,7 +103,7 @@ ddb_events_table_features(char *key, char *content, int update)
   else
   {
     char *tempb[1];
-    tempb[0] = keytemp;
+    tempb[0] = key;
 
     feature_set(&me, (const char * const *)tempb, 1);
   }
@@ -155,3 +138,172 @@ ddb_events_table_logging(char *key, char *content, int update)
 #endif
 }
 
+/** Handle events on Nick Table.
+ * @param[in] key Key of registry.
+ * @param[in] content Content of registry.
+ * @param[in] update Update of registry or no.
+ */
+static void
+ddb_events_table_nicks(char *key, char *content, int update)
+{
+  struct Client *cptr;
+  struct DdbNick *ddbnick;
+  char *botname;
+  int nick_renames = 0;
+
+  /* Only my clients */
+  if ((cptr = FindUser(key)) && MyConnect(cptr))
+  {
+    botname = ddb_get_botname(DDB_NICKSERV);
+    /* Droping Key */
+    if (!content && (IsAccount(cptr) || IsNickSuspended(cptr)))
+    {
+      struct Flags oldflags;
+
+      oldflags = cli_flags(cptr);
+
+      // Clear operator modes and privilegies for user.
+      nickreg_clear_modeprivs(cptr);
+
+      // Clear user modes.
+      nickreg_clear_mode(cptr);
+
+      sendcmdbotto_one(botname, CMD_NOTICE, cptr,
+                       "%C :*** Your nick %C is droping.", cptr, cptr);
+
+      send_umode_out(cptr, cptr, &oldflags, IsRegistered(cptr));
+    }
+    else if (content && ((ddbnick = ddb_nick_get(key, content, 0))))
+    {
+      /* New Key or Update Key */
+      if (ddbnick->flags & DDB_NICK_FORBID)
+      {
+        /* Forbid Nick */
+        sendcmdbotto_one(botname, CMD_NOTICE, cptr,
+                         "%C :*** Your nick %C has been forbided, cannot be used. Reason: %s",
+                         cptr, cptr, ddbnick->reason ? ddbnick->reason : "<no reason>");
+        nick_renames = 1;
+      }
+      else if (ddbnick->flags & DDB_NICK_SUSPEND && update && IsAccount(cptr))
+      {
+        struct Flags oldflags;
+
+        oldflags = cli_flags(cptr);
+
+        // Clear operator modes and privilegies for user.
+        nickreg_clear_modeprivs(cptr);
+
+        // Clear user modes.
+        nickreg_clear_mode(cptr);
+
+        SetNickSuspended(cptr);
+
+        sendcmdbotto_one(botname, CMD_NOTICE, cptr,
+                         "%C :*** Your nick %C has been suspended. Reason: %s",
+                         cptr, cptr, ddbnick->reason ? ddbnick->reason : "<no reason>");
+
+        send_umode_out(cptr, cptr, &oldflags, IsRegistered(cptr));
+      }
+      else if ((!ddbnick->flags & DDB_NICK_SUSPEND) && update && IsNickSuspended(cptr))
+      {
+        struct Flags oldflags;
+
+        oldflags = cli_flags(cptr);
+
+        ClearNickSuspended(cptr);
+
+        nickreg_set_modes(cptr, ddbnick);
+
+        sendcmdbotto_one(botname, CMD_NOTICE, cptr,
+                         "%C :*** Your nick %C has been unsuspended.", cptr, cptr);
+
+        send_umode_out(cptr, cptr, &oldflags, IsRegistered(cptr));
+      }
+      else if (!update)
+      {
+        sendcmdbotto_one(botname, CMD_NOTICE, cptr,
+                         "%C :*** Your nick %C has been registered.", cptr, cptr);
+        nick_renames = 1;
+      }
+      else if (update)
+      {
+        /* Possible change automodes */
+        nickreg_set_modes(cptr, ddbnick);
+      }
+    }
+
+    if (nick_renames)
+    {
+      char *newnick;
+      char tmp[100];
+      char *parv[3];
+      int flags = 0;
+
+      newnick = get_random_nick(cptr);
+
+      SetRenamed(flags);
+
+      parv[0] = cli_name(cptr);
+      parv[1] = newnick;
+      ircd_snprintf(0, tmp, sizeof(tmp), "%T", TStime());
+      parv[2] = tmp;
+
+      set_nick_name(cptr, cptr, newnick, 3, parv, flags);
+    }
+  }
+}
+
+/** Handle events on Operators Table.
+ * @param[in] key Key of registry.
+ * @param[in] content Content of registry.
+ * @param[in] update Update of registry or no.
+ */
+static void
+ddb_events_table_operators(char *key, char *content, int update)
+{
+  struct Client *cptr;
+  if ((cptr = FindUser(key)) && MyConnect(cptr))
+  {
+    /* Droping Key */
+    if (!content && (IsAdmin(cptr) || IsCoder(cptr) || IsHelper(cptr) || IsServicesBot(cptr)))
+    {
+      struct Flags oldflags;
+
+      oldflags = cli_flags(cptr);
+
+      // Clear all modes and privilegies for user.
+      nickreg_clear_modeprivs(cptr);
+
+      send_umode_out(cptr, cptr, &oldflags, IsRegistered(cptr));
+
+    }
+    else if (content)
+    {
+      struct DdbOperator *ddboptr;
+
+      /* New Key or Update Key */
+      if (IsAccount(cptr) && ((ddboptr = ddb_opers_get(key, content, 0))))
+      {
+        struct Flags oldflags = cli_flags(cptr);
+
+        ClearAdmin(cptr);
+        ClearCoder(cptr);
+        ClearHelper(cptr);
+        ClearServicesBot(cptr);
+
+        if (!IsOperByCmd(cptr))
+        {
+          ClearLocOp(cptr);
+          if (IsOper(cptr))
+            --UserStats.opers;
+          ClearOper(cptr);
+        }
+
+        // Set modes and privilegies for user.
+        nickreg_set_modeprivs(cptr, ddboptr);
+
+        send_umode_out(cptr, cptr, &oldflags, IsRegistered(cptr));
+      }
+    }
+  }
+}

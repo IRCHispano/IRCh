@@ -124,6 +124,32 @@ struct ddb_stat {
 /** DDB Macro for freeing memory. */
 #define DdbFree(x)	MyFree(x)
 
+
+/** Record in table n.
+ */
+struct DdbNick {
+  char*   name;        /**< Nick. */
+  char*   password;    /**< Password. */
+  char*   certificate; /**< Fingerprint certificate. */
+  int32_t flags;       /**< Flags. */
+  char*   automodes;   /**< Automodes for sets mode. */
+  char*   reason;      /**< Reason on suspend/forbid nicks. */
+};
+
+/* Flag forbid nick. */
+#define DDB_NICK_FORBID  0x1
+/* Flag suspend nick. */
+#define DDB_NICK_SUSPEND 0x2
+
+/** Record in table 0.
+ */
+struct DdbOperator {
+  char*    nick;         /**< Nick. */
+  char*    modes;        /**< Modes. */
+  uint64_t privs_flags;  /**< Flags. */
+  struct   Privs privs;  /**< Privileges for opers. */
+};
+
 /*
  * Prototypes
  */
@@ -173,6 +199,12 @@ extern void ddb_db_compact(unsigned char table);
 extern void ddb_db_hash_read(unsigned char table, unsigned int *hi, unsigned int *lo);
 extern void ddb_db_hash_write(unsigned char table);
 extern void ddb_db_end(void);
+
+/* ddb_tools externs */
+extern struct DdbNick *ddb_nick_get(char *ddb_key, char *ddb_content, int cache);
+extern struct DdbNick *ddb_nick_find(char *nick);
+extern struct DdbOperator *ddb_opers_get(char *ddb_key, char *ddb_content, int cache);
+extern struct DdbOperator *ddb_opers_find(char *nick);
 
 #endif /* defined(DDB) */
 

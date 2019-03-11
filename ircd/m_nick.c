@@ -47,8 +47,6 @@
 /* #include <assert.h> -- Now using assert in ircd_log.h */
 #include <stdlib.h>
 #include <string.h>
-#include <json-c/json.h>
-#include <json-c/json_object.h>
 
  /*
 * 'do_nick_name' ensures that the given parameter (nick) is really a proper
@@ -96,7 +94,7 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
   int            flags = 0;
   int            random_nick = 0;
 #if defined(DDB)
-  struct Ddb *ddb;
+  struct DdbNick *ddbnick;
   char *p;
 #endif
 
@@ -112,6 +110,20 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
     send_reply(sptr, ERR_NONICKNAMEGIVEN);
     return 0;
   }
+
+#if 0
+  /*
+   * parv[0] will be empty for clients connecting for the first time
+   */
+  client_name = (*(cli_name(sptr))) ? cli_name(sptr) : "*";
+
+  /*
+   * Not change nick several times BEFORE to have completed your entrance
+   * in the network.
+   */
+  if (cli_auth(sptr) && !IsRegistered(sptr))
+    return 0;
+#endif
 
 #if defined(DDB)
   p = strchr(parv[1], ':');
@@ -144,7 +156,7 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
    */
   if (feature_bool(FEAT_ALLOW_RANDOM_NICKS) && (strlen(parv[1]) == 1) && (*parv[1] == '*'))
   {
-    parv[1] = get_random_nick(sptr);
+    strcpy(parv[1], get_random_nick(sptr));
     random_nick = 1;
   }
 
@@ -280,30 +292,20 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
    * --zoltan
    */
   if (IsGhost(flags)) {
-    char *passddb;
-    ddb = ddb_find_key(DDB_NICKDB, parv[1]);
+    ddbnick = ddb_nick_find(nick);
 
-    if (ddb && (CurrentTime >= cli_nextnick(cptr))) {
-      char *passddb = NULL;
-      json_object *json, *json_pass;
-      enum json_tokener_error jerr = json_tokener_success;
+    if (ddbnick && (CurrentTime >= cli_nextnick(sptr))) {
 
-      json = json_tokener_parse_verbose(ddb_content(ddb), &jerr);
-      if (jerr == json_tokener_success) {
-        json_object_object_get_ex(json, "pass", &json_pass);
-        passddb = (char *)json_object_get_string(json_pass);
-      }
-
-      if (passddb) {
+      if (ddbnick->password) {
         char *botname = ddb_get_botname(DDB_NICKSERV);
 
-        if (verify_pass_nick(ddb_key(ddb), passddb,
-                      (parc >= 3 ? parv[2] : cli_passwd(cptr)))) {
+        if (verify_pass_nick(ddbnick->name, ddbnick->password,
+                      (parc >= 3 ? parv[2] : cli_passwd(sptr)))) {
           char nickwho[NICKLEN + 2];
 
           SetIdentify(flags);
 
-          if (cli_name(cptr)[0] == '\0') {
+          if (cli_name(sptr)[0] == '\0') {
             /* Ghost during the establishment of the connection
              * do not have old nick information, it is added ! to the nick
              */
@@ -312,7 +314,7 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
 
           } else {
             /* Set your older nick */
-            strncpy(nickwho, cli_name(cptr), sizeof(nickwho));
+            strncpy(nickwho, cli_name(sptr), sizeof(nickwho));
           }
 
           /* Kill user */
@@ -323,20 +325,20 @@ int m_nick(struct Client* cptr, struct Client* sptr, int parc, char* parv[])
               acptr, nickwho);
 
           if (MyConnect(acptr)) {
-            sendcmdto_one(acptr, CMD_QUIT, cptr, ":Killed (GHOST session "
+            sendcmdto_one(acptr, CMD_QUIT, sptr, ":Killed (GHOST session "
                    "released by %s)", nickwho);
             sendcmdto_one(&me, CMD_KILL, acptr, "%C :GHOST session released by %s",
                    acptr, nickwho);
           }
-          sendcmdbotto_one(botname, CMD_NOTICE, cptr, "%C :*** %C GHOST session has been "
-                   "released.", acptr, cptr);
-          exit_client_msg(cptr, acptr, &me, "Killed (GHOST session released by %s)",
+          sendcmdbotto_one(botname, CMD_NOTICE, sptr, "%C :*** %C GHOST session has been "
+                   "released.", acptr, sptr);
+          exit_client_msg(sptr, acptr, &me, "Killed (GHOST session released by %s)",
                     nickwho);
 
           return set_nick_name(cptr, sptr, nick, parc, parv, flags);
         } else {
-          sendcmdbotto_one(botname, CMD_NOTICE, cptr,
-                 "%C :*** Password incorrect.", cptr);
+          sendcmdbotto_one(botname, CMD_NOTICE, sptr,
+                 "%C :*** Password incorrect.", sptr);
           /* TODO: Contraseña incorrecta */
         }
       }

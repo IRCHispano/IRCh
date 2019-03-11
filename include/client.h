@@ -133,6 +133,7 @@ enum Priv
     PRIV_FORCE_OPMODE, /**< can hack modes on quarantined channels */
     PRIV_FORCE_LOCAL_OPMODE, /**< can hack modes on quarantined local channels */
     PRIV_APASS_OPMODE, /**< can hack modes +A/-A/+U/-U */
+    PRIV_WALK_CHAN, /**< oper can walk through modes */
     PRIV_NETWORK, /**< can CONNECT/SQUIT servers */
     PRIV_CHANSERV, /**< oper can set/unset user mode +k */
     PRIV_HIDDEN_VIEWER, /**< oper can set/unset user mode +X */
@@ -168,6 +169,7 @@ enum Flag
     FLAG_BURST,                     /**< Server is receiving a net.burst */
     FLAG_BURST_ACK,                 /**< Server is waiting for eob ack */
     FLAG_IPCHECK,                   /**< Added or updated IPregistry data */
+    FLAG_OPER_BY_CMD,               /**< Oper by OPER command */
     FLAG_LOCOP,                     /**< +O Local operator -- SRB */
     FLAG_SERVNOTICE,                /**< +s server notices such as kill */
     FLAG_OPER,                      /**< +o Operator */
@@ -619,6 +621,8 @@ struct Client {
 #define IsDeaf(x)               HasFlag(x, FLAG_DEAF)
 /** Return non-zero if the client has been IP-checked for clones. */
 #define IsIPChecked(x)          HasFlag(x, FLAG_IPCHECK)
+/** Return non-zero if the client has set Oper by OPER command. */
+#define IsOperByCmd(x)          HasFlag(x, FLAG_OPER_BY_CMD)
 /** Return non-zero if we have received an ident response for the client. */
 #define IsGotId(x)              HasFlag(x, FLAG_GOTID)
 /** Return non-zero if the client has set mode +i (invisible). */
@@ -708,6 +712,8 @@ struct Client {
 #define SetGotId(x)             SetFlag(x, FLAG_GOTID)
 /** Mark a client as being IP-checked. */
 #define SetIPChecked(x)         SetFlag(x, FLAG_IPCHECK)
+/** Mark a client as having set Oper by OPER command. */
+#define SetOperByCmd(x)         SetFlag(x, FLAG_OPER_BY_CMD)
 /** Mark a client as having mode +i (invisible). */
 #define SetInvisible(x)         SetFlag(x, FLAG_INVISIBLE)
 /** Mark a client as causing a net.join. */
@@ -785,6 +791,8 @@ struct Client {
 #define ClearDebug(x)           ClrFlag(x, FLAG_DEBUG)
 /** Remove the client's IP-checked flag. */
 #define ClearIPChecked(x)       ClrFlag(x, FLAG_IPCHECK)
+/** Remove the client's set Oper by OPER command. */
+#define ClearOperByCmd(x)       ClrFlag(x, FLAG_OPER_BY_CMD)
 /** Remove mode +i (invisible) from the client. */
 #define ClearInvisible(x)       ClrFlag(x, FLAG_INVISIBLE)
 /** Remove mode +O (local operator) from the client. */

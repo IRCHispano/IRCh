@@ -29,6 +29,7 @@
 #include "channel.h"
 #include "class.h"
 #include "client.h"
+#include "ddb.h"
 #include "hash.h"
 #include "ircd.h"
 #include "ircd_alloc.h"
@@ -608,6 +609,225 @@ int verify_pass_nick(char *nick, char *cryptpass, char *pass)
 
   return 0;
 }
+
+void nickreg_set_modes(struct Client* cptr, struct DdbNick *ddbnptr)
+{
+  if (!ddbnptr->flags & DDB_NICK_SUSPEND)
+  {
+    char c, *p;
+    int add = 1, i;
+
+    SetAccount(cptr);
+
+    if (ddbnptr->automodes)
+    {
+      p = ddbnptr->automodes;
+
+      while (!0)
+      {
+        c = *p++;
+        switch (c)
+        {
+          case '\0':
+          case ' ':
+          case '\t':
+            return;
+          case '+':
+            add = 1;
+            break;
+          case '-':
+            add = 0;
+            break;
+
+          case 'r':
+          case 'S':
+          case 'a':
+          case 'C':
+          case 'h':
+          case 'o':
+          case 'O':
+          case 'B':
+            break; /* Ignored */
+
+          default:
+            for (i = 0; i < USERMODELIST_SIZE; ++i)
+            {
+              if (userModeList[i].c == c)
+                FlagSet(&cli_flags(cptr), userModeList[i].flag);
+            }
+            break;
+        }
+      }
+    }
+  }
+  else
+  {
+    SetNickSuspended(cptr);
+  }
+}
+
+void nickreg_clear_mode(struct Client* cptr)
+{
+  ClearAccount(cptr);
+  ClearNickSuspended(cptr);
+
+  ClearMsgOnlyReg(cptr);
+  ClearNoChan(cptr);
+  ClearCommonChansOnly(cptr);
+  ClearUserBot(cptr);
+}
+
+void nickreg_set_modeprivs(struct Client* cptr, struct DdbOperator *ddboptr)
+{
+  char c, *p;
+  int add = 1;
+
+  if (ddboptr->modes)
+  {
+    p = ddboptr->modes;
+
+    while (!0)
+    {
+      c = *p++;
+      switch (c)
+      {
+        case '\0':
+        case ' ':
+        case '\t':
+          goto out;
+        case '+':
+          add = 1;
+          break;
+        case '-':
+          add = 0;
+          break;
+        case 'a':
+          if (add)
+            SetAdmin(cptr);
+          break;
+        case 'C':
+          if (add)
+            SetCoder(cptr);
+          break;
+        case 'h':
+          if (add)
+            SetHelper(cptr);
+          break;
+        case 'o':
+          if (add)
+          {
+            SetOper(cptr);
+            ++UserStats.opers;
+          }
+          break;
+        case 'O':
+          if (add)
+            SetLocOp(cptr);
+          break;
+        case 'B':
+          if (add)
+            SetServicesBot(cptr);
+          break;
+
+        default:
+          break;
+      }
+    }
+  }
+
+out:
+
+  if (IsAnOper(cptr))
+  {
+    enum Priv priv;
+
+    cli_handler(cptr) = OPER_HANDLER;
+    SetWallops(cptr);
+    SetDebug(cptr);
+    SetServNotice(cptr);
+    det_confs_butmask(cptr, CONF_CLIENT & ~CONF_OPERATOR);
+    set_snomask(cptr, SNO_OPERDEFAULT, SNO_ADD);
+    cli_max_sendq(cptr) = 0; /* Get the sendq from the oper's class */
+    client_set_privs(cptr, NULL, 1);
+
+    /* Clear out client's privileges. */
+    memset(cli_privs(cptr), 0, sizeof(struct Privs));
+
+    /* For each feature, figure out whether it comes from ddb, then apply it.
+     */
+    for (priv = 0; priv < PRIV_LAST_PRIV; ++priv)
+    {
+      /* Set it if necessary (privileges were already cleared). */
+      if (FlagHas(&ddboptr->privs, priv))
+        SetPriv(cptr, priv);
+    }
+
+    if (HasPriv(cptr, PRIV_PROPAGATE))
+    {
+      /* force propagating opers to display */
+      SetPriv(cptr, PRIV_DISPLAY);
+    }
+    else
+    {
+      /* if they don't propagate oper status, prevent desyncs */
+      ClrPriv(cptr, PRIV_KILL);
+      ClrPriv(cptr, PRIV_GLINE);
+      ClrPriv(cptr, PRIV_JUPE);
+      ClrPriv(cptr, PRIV_OPMODE);
+      ClrPriv(cptr, PRIV_BADCHAN);
+    }
+/*
+    sendto_opmask_butone(0, SNO_OLDSNO, "%s (%s@%s) is now operator (%c)",
+                         cli_name(cptr), cli_user(cptr)->username,
+                         cli_sockhost(cptr), IsOper(cptr) ? 'O' : 'o');
+*/
+
+  }
+
+}
+
+void nickreg_clear_modeprivs(struct Client* cptr)
+{
+  ClearAdmin(cptr);
+  ClearCoder(cptr);
+  ClearHelper(cptr);
+  ClearServicesBot(cptr);
+
+  if (!IsOperByCmd(cptr))
+  {
+    ClearLocOp(cptr);
+    if (IsOper(cptr))
+      --UserStats.opers;
+
+    cli_handler(cptr) = CLIENT_HANDLER;
+    if (feature_bool(FEAT_WALLOPS_OPER_ONLY))
+      ClearWallops(cptr);
+    if (feature_bool(FEAT_HIS_DEBUG_OPER_ONLY))
+      ClearDebug(cptr);
+    if (feature_bool(FEAT_HIS_SNOTICES_OPER_ONLY))
+    {
+      ClearServNotice(cptr);
+      set_snomask(cptr, 0, SNO_SET);
+    }
+    det_confs_butmask(cptr, CONF_CLIENT & ~CONF_OPERATOR);
+    client_set_privs(cptr, NULL, 0);
+
+  }
+  else
+  {
+    /* Privs via Operator Block ircd.conf */
+    client_set_privs(cptr, NULL, 0);
+
+    if (!HasPriv(cptr, PRIV_HIDDEN_VIEWER))
+      ClearViewHiddenHost(cptr);
+    if (!HasPriv(cptr, PRIV_CHANSERV))
+      ClearChannelService(cptr);
+    if (!HasPriv(cptr, PRIV_HIDE_IDLE))
+      ClearNoIdle(cptr);
+    if (!HasPriv(cptr, PRIV_WHOIS_NOTICE))
+      ClearWhoisNotice(cptr);
+  }
+}
 #endif /* defined(DDB) */
 
 /** Get a random nickname.
@@ -766,8 +986,10 @@ int set_nick_name(struct Client* cptr, struct Client* sptr,
      * on that channel. Propagate notice to other servers.
      */
     if (IsUser(sptr)) {
-      /* Notify exit user */
-      monitor_notify(sptr, RPL_MONOFFLINE);
+      if (!IsNickEquivalent(flags)) {
+        /* Notify exit user */
+        monitor_notify(sptr, RPL_MONOFFLINE);
+      }
 
       sendcmdto_common_channels_butone(sptr, CMD_NICK, NULL, ":%s", nick);
       add_history(sptr, 1);
@@ -1324,11 +1546,18 @@ int set_user_mode(struct Client *cptr, struct Client *sptr, int parc,
           ClearWhoisNotice(sptr);
         break;
       case 'r':
+#if defined(DDB)
+        if (what == MODE_ADD)
+          SetAccount(sptr);
+        else
+          ClearAccount(sptr);
+#else
 	if (*(p + 1) && (what == MODE_ADD)) {
 	  account = *(++p);
 	  SetAccount(sptr);
 	}
 	/* There is no -r */
+#endif
 	break;
       default:
         send_reply(sptr, ERR_UMODEUNKNOWNFLAG, *m);
@@ -1780,5 +2009,5 @@ send_supported(struct Client *cptr)
   return 0; /* convenience return, if it's ever needed */
 }
 
-/* vim: shiftwidth=2 
- */ 
+/* vim: shiftwidth=2
+ */

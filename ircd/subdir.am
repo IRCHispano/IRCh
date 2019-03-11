@@ -194,6 +194,7 @@ ircd_ircd_SOURCES += \
 	ircd/ddb.c \
 	ircd/ddb_db_native.c \
 	ircd/ddb_events.c \
+	ircd/ddb_tools.c \
 	ircd/ircd_tea.c \
 	ircd/m_bmode.c \
 	ircd/m_db.c \

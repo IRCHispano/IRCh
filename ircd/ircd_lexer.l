@@ -160,6 +160,7 @@ static struct lexer_token {
   { "tb", TBYTES },
   { "terabytes", TBYTES },
   { "unlimit_query", TPRIV_UNLIMIT_QUERY },
+  { "walk_chan", TPRIV_WALK_CHAN },
   { "walk_lchan", TPRIV_WALK_LCHAN },
   { "wide_gline", TPRIV_WIDE_GLINE },
   { "whois_notice", TPRIV_WHOIS_NOTICE },

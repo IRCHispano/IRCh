@@ -35,6 +35,10 @@ struct User;
 struct Channel;
 struct MsgBuf;
 struct Flags;
+#if defined(DDB)
+struct DdbNick;
+struct DdbOperator;
+#endif
 
 /*
  * Macros
@@ -113,6 +117,10 @@ extern void         user_count_memory(size_t* count_out, size_t* bytes_out);
 
 #if defined(DDB)
 extern int verify_pass_nick(char *nick, char *cryptpass, char *pass);
+extern void nickreg_set_modes(struct Client* cptr, struct DdbNick *ddbnptr);
+extern void nickreg_clear_mode(struct Client* cptr);
+extern void nickreg_set_modeprivs(struct Client* cptr, struct DdbOperator *ddboptr);
+extern void nickreg_clear_modeprivs(struct Client* cptr);
 #endif
 extern int do_nick_name(char* nick);
 extern char *get_random_nick(struct Client* cptr);
