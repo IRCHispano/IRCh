@@ -58,8 +58,12 @@ enum ListenerFlag {
   LISTEN_IPV6,
   /** Port accepts only webirc connections. */
   LISTEN_WEBIRC,
+  /** Port accepts only proxy connections. */
+  LISTEN_PROXY,
   /** Port is SSL enabled. */
   LISTEN_SSL,
+  /** Port is transparent SSL Proxy enabled. */
+  LISTEN_PROXYSSL,
   /** Sentinel for counting listener flags. */
   LISTEN_LAST_FLAG
 };
@@ -85,9 +89,11 @@ struct Listener {
 #define listener_server(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_SERVER)
 #define listener_active(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_ACTIVE)
 #define listener_webirc(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_WEBIRC)
+#define listener_proxy(LISTENER)  FlagHas(&(LISTENER)->flags, LISTEN_PROXY)
+#define listener_proxyssl(LISTENER) FlagHas(&(LISTENER)->flags, LISTEN_PROXYSSL)
 #define listener_ssl(LISTENER)    FlagHas(&(LISTENER)->flags, LISTEN_SSL)
 
-extern void        add_listener(int port, const char* vaddr_ip, 
+extern void        add_listener(int port, const char* vaddr_ip,
                                 const char* mask,
                                 const struct ListenerFlags *flags);
 extern void        close_listener(struct Listener* listener);

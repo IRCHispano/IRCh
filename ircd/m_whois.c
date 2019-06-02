@@ -147,6 +147,7 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
   if (user)
   {
     const struct wline *wline;
+    char *modes = umode_str(acptr);
 
     if (user->away)
        send_reply(sptr, RPL_AWAY, name, user->away);
@@ -189,6 +190,8 @@ static void do_whois(struct Client* sptr, struct Client *acptr, int parc)
     if (HasHiddenHost(acptr) && (IsAnOper(sptr) || acptr == sptr))
       send_reply(sptr, RPL_WHOISACTUALLY, name, user->username,
                  user->realhost, ircd_ntoa(&cli_ip(acptr)));
+
+    send_reply(sptr, RPL_WHOISMODES, name, *modes ? modes : "");
 
     /* Hint: if your looking to add more flags to a user, eg +h, here's
      *       probably a good place to add them :)

@@ -124,6 +124,7 @@ ircd_ircd_SOURCES = \
 	ircd/m_privmsg.c \
 	ircd/m_privs.c \
 	ircd/m_proto.c \
+	ircd/m_proxy.c \
 	ircd/m_pseudo.c \
 	ircd/m_quit.c \
 	ircd/m_rehash.c \

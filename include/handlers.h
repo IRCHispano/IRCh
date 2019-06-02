@@ -190,6 +190,7 @@ extern int mo_xquery(struct Client*, struct Client*, int, char*[]);
 extern int mr_error(struct Client*, struct Client*, int, char*[]);
 extern int mr_pass(struct Client*, struct Client*, int, char*[]);
 extern int mr_pong(struct Client*, struct Client*, int, char*[]);
+extern int mr_proxy(struct Client*, struct Client*, int, char*[]);
 extern int mr_server(struct Client*, struct Client*, int, char*[]);
 
 /*

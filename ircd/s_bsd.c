@@ -579,6 +579,10 @@ void add_connection(struct Listener* listener, int fd) {
   {
       new_client = make_client(0, STAT_WEBIRC);
   }
+  else if (listener_proxy(listener))
+  {
+      new_client = make_client(0, STAT_PROXY);
+  }
   else
   {
     /*

@@ -199,6 +199,27 @@ stats_access(struct Client *to, const struct StatDesc *sd, char *param)
   }
 }
 
+/** Report ProxyConf entries.
+ * @param[in] to Client requesting list.
+ */
+static void
+report_proxy_list(struct Client* to)
+{
+  const struct ProxyConf* p = conf_get_proxy_list();
+  for ( ; p; p = p->next)
+    send_reply(to, RPL_STATSPROXLINE, ircd_ntoa(&p->ip), p->bits);
+}
+
+/** Report Proxy lines to a user.
+ * @param[in] sptr Client requesting statistics.
+ * @param[in] sd Stats descriptor for request (ignored).
+ * @param[in] mask Filter for hostmasks to show.
+ */
+static void
+stats_proxys(struct Client *sptr, const struct StatDesc *sd, char *mask)
+{
+  return report_proxy_list(sptr);
+}
 
 /** Report DenyConf entries.
  * @param[in] to Client requesting list.
@@ -735,6 +756,9 @@ struct StatDesc statsinfo[] = {
   { 'x', "memusage", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_x,
     stats_meminfo, 0,
     "List usage information." },
+  { 'X', "proxy", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_X,
+    stats_proxys, 0,
+    "Proxy authorizations." },
   { 'y', "classes", STAT_FLAG_OPERFEAT, FEAT_HIS_STATS_y,
     report_classes, 0,
     "Connection classes." },

@@ -120,6 +120,7 @@ extern const struct Numeric* get_error_numeric(int err);
 	RPL_STATSVLINE	     227	   unreal */
 #define RPL_STATSALINE       226        /* Hybrid, Undernet */
 #define RPL_STATSQLINE       228        /* Undernet extension */
+#define RPL_STATSPROXLINE    229        /* IRC-Hispano extension */
 
 /*      RPL_SERVICEINFO      231	unused */
 /*      RPL_ENDOFSERVICES    232	unused */
@@ -302,6 +303,7 @@ extern const struct Numeric* get_error_numeric(int err);
 /*	RPL_SPAM	     377   austnet */
 /*      RPL_BANEXPIRED       378   aircd */
 /*      RPL_KICKLINKED       379   aircd */
+#define RPL_WHOISMODES       379        /* IRC-Hispano, Unreal extension */
 /*      RPL_BANLINKED        380   aircd */
 
 #define RPL_YOUREOPER        381

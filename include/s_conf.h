@@ -117,6 +117,14 @@ struct wline
   char *description;     /**< Text description, e.g. for provider. */
 };
 
+/** Proxy authorization structure. */
+struct ProxyConf
+{
+  struct ProxyConf*   next;     /**< Next ProxyConf in #proyConfList. */
+  struct irc_in_addr  ip;       /**< Address for IP-based proxys. */
+  unsigned char       bits;     /**< Number of bits for ip proxys */
+};
+
 /** Local K-line structure. */
 struct DenyConf {
   struct DenyConf*    next;     /**< Next DenyConf in #denyConfList. */
@@ -217,6 +225,7 @@ extern const struct LocalConf* conf_get_local(void);
 extern const struct CRuleConf* conf_get_crule_list(void);
 extern const struct DenyConf*  conf_get_deny_list(void);
 extern const struct ExceptConf* conf_get_except_list(void);
+extern const struct ProxyConf* conf_get_proxy_list(void);
 
 extern const char* conf_eval_crule(const char* name, int mask);
 
@@ -233,6 +242,7 @@ extern int  conf_check_server(struct Client *cptr);
 extern int rehash(struct Client *cptr, int sig);
 extern int find_kill(struct Client *cptr);
 extern int find_exception(struct Client *cptr);
+extern int find_proxy(struct Client *cptr);
 extern const char *find_quarantine(const char* chname);
 extern const struct wline *find_webirc(const struct irc_in_addr *addr, const char *passwd);
 extern void lookup_confhost(struct ConfItem *aconf);

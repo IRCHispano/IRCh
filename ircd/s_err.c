@@ -492,7 +492,7 @@ static Numeric replyTable[] = {
 /* 228 */
   { RPL_STATSQLINE, "Q %s :%s", "228" },
 /* 229 */
-  { 0 },
+  { RPL_STATSPROXLINE, "X %s %d", "229" },
 /* 230 */
   { 0 },
 /* 231 */
@@ -792,7 +792,7 @@ static Numeric replyTable[] = {
 /* 378 */
   { 0 },
 /* 379 */
-  { 0 },
+  { RPL_WHOISMODES, "%s :is using modes +%s", "379" },
 /* 380 */
   { 0 },
 /* 381 */

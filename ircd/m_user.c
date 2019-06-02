@@ -34,6 +34,7 @@
 #include "numeric.h"
 #include "numnicks.h"
 #include "s_auth.h"
+#include "s_conf.h"
 #include "s_debug.h"
 #include "s_misc.h"
 #include "s_user.h"
@@ -67,6 +68,8 @@ int m_user(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
     return exit_client(cptr, cptr, &me, "Use a different port");
   if (IsWebircPort(cptr) && !cli_wline(cptr))
     return exit_client(cptr, cptr, &me, "WebIRC authorization required");
+  if (IsProxyPort(cptr) && !find_proxy(cptr))
+    return exit_client(cptr, cptr, &me, "Proxy authorization required");
 
   if (parc < 5)
     return need_more_params(sptr, "USER");

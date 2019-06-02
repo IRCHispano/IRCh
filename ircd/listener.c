@@ -150,6 +150,7 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
     len = 0;
     flags[len++] = listener_server(listener) ? 'S'
         : listener_webirc(listener) ? 'W'
+        : listener_proxy(listener) ? 'P'
         : 'C';
     if (FlagHas(&listener->flags, LISTEN_HIDDEN))
     {
@@ -160,6 +161,10 @@ void show_ports(struct Client* sptr, const struct StatDesc* sd,
     if (FlagHas(&listener->flags, LISTEN_SSL))
     {
       flags[len++] = 'E';
+    }
+    if (FlagHas(&listener->flags, LISTEN_PROXYSSL))
+    {
+      flags[len++] = 'e';
     }
     if (FlagHas(&listener->flags, LISTEN_IPV4))
     {

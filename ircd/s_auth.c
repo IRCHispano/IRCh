@@ -1156,7 +1156,7 @@ void start_auth(struct Client* client)
   auth->port = remote.port;
 
   /* Set required client inputs for users. */
-  if (IsUserPort(client) || IsWebircPort(client)) {
+  if (IsUserPort(client) || IsWebircPort(client) || IsProxyPort(client)) {
     cli_user(client) = make_user(client);
     cli_user(client)->server = &me;
     FlagSet(&auth->flags, AR_NEEDS_USER);
@@ -1168,7 +1168,7 @@ void start_auth(struct Client* client)
     }
   }
 
-  if (!IsWebircPort(client)) {
+  if (!IsWebircPort(client) && !IsProxyPort(client)) {
     /* Try to start DNS lookup. */
     start_dns_query(auth);
 

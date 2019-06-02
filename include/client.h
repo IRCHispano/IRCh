@@ -533,6 +533,7 @@ struct Client {
 #define STAT_SERVER             0x040 /**< fully registered server */
 #define STAT_USER               0x080 /**< fully registered user */
 #define STAT_WEBIRC             0x100 /**< connection on a webirc port */
+#define STAT_PROXY              0x200 /**< connection on a proxy port */
 
 /*
  * status macros.
@@ -549,7 +550,7 @@ struct Client {
 #define IsMe(x)                 (cli_status(x) == STAT_ME)
 /** Return non-zero if the client has not yet registered. */
 #define IsUnknown(x)            (cli_status(x) & \
-        (STAT_UNKNOWN | STAT_UNKNOWN_USER | STAT_UNKNOWN_SERVER | STAT_WEBIRC))
+        (STAT_UNKNOWN | STAT_UNKNOWN_USER | STAT_UNKNOWN_SERVER | STAT_WEBIRC | STAT_PROXY))
 /** Return non-zero if the client is an unregistered connection on a
  * server port. */
 #define IsServerPort(x)         (cli_status(x) == STAT_UNKNOWN_SERVER )
@@ -559,6 +560,9 @@ struct Client {
 /** Return non-zero if the client is an unregistered connection on a
  * WebIRC port that has not yet sent WEBIRC. */
 #define IsWebircPort(x)         (cli_status(x) == STAT_WEBIRC)
+/** Return non-zero if the client is an unregistered connection on a
+ * WebIRC port that has not yet sent WEBIRC. */
+#define IsProxyPort(x)         (cli_status(x) == STAT_PROXY)
 /** Return non-zero if the client is a real client connection. */
 #define IsClient(x)             (cli_status(x) & \
         (STAT_HANDSHAKE | STAT_ME | STAT_UNKNOWN |\

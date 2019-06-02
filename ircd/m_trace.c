@@ -164,6 +164,7 @@ void do_trace(struct Client *cptr, struct Client *sptr, int parc, char *parv[])
       case STAT_UNKNOWN:
       case STAT_UNKNOWN_USER:
       case STAT_WEBIRC:
+      case STAT_PROXY:
 	send_reply(sptr, RPL_TRACEUNKNOWN, conClass,
 		   get_client_name(acptr, HIDE_IP));
         cnt++;

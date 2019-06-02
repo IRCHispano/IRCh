@@ -89,6 +89,8 @@ struct CRuleConf*  cruleConfList;
 struct DenyConf*   denyConfList;
 /** Global list of E-lines. */
 struct ExceptConf* exceptConfList;
+/** Global list of Proxys. */
+struct ProxyConf* proxyConfList;
 
 /** Tell a user that they are banned, dumping the message from a file.
  * @param sptr Client being rejected
@@ -810,6 +812,26 @@ const struct ExceptConf* conf_get_except_list(void)
  return exceptConfList;
 }
 
+/** Free all proxy authorizations from #proxyConfList. */
+static void conf_erase_proxy_list(void)
+{
+ struct ProxyConf* next;
+ struct ProxyConf* p = proxyConfList;
+ for ( ; p; p = next) {
+   next = p->next;
+   MyFree(p);
+ }
+ proxyConfList = 0;
+}
+
+/** Return #proxyConfList.
+* @return #proxyConfList
+*/
+const struct ProxyConf* conf_get_proxy_list(void)
+{
+ return proxyConfList;
+}
+
 /** Find any existing quarantine for the named channel.
  * @param chname Channel name to search for.
  * @return Reason for channel's quarantine, or NULL if none exists.
@@ -1004,6 +1026,7 @@ int rehash(struct Client *cptr, int sig)
   conf_erase_crule_list();
   conf_erase_deny_list();
   conf_erase_except_list();
+  conf_erase_proxy_list();
   motd_clear();
 
   /*
@@ -1217,6 +1240,20 @@ int find_exception(struct Client *cptr)
  }
 
  return 0;
+}
+
+/** Find a Proxy authorization for the given client.
+ * @param cptr Client to search for.
+ * @return 1 if cound; or 0 not found.
+ */
+int find_proxy(struct Client *cptr)
+{
+  struct ProxyConf *pconf;
+
+  for (pconf = proxyConfList; pconf; pconf = pconf->next)
+    if (ipmask_check(&cli_ip(cptr), &pconf->ip, pconf->bits))
+      return 1;
+  return 0;
 }
 
 /** Attempt to attach Client blocks to \a cptr.  If attach_iline()

@@ -66,6 +66,7 @@
   extern struct LocalConf   localConf;
   extern struct DenyConf*   denyConfList;
   extern struct ExceptConf* exceptConfList;
+  extern struct ProxyConf*  proxyConfList;
   extern struct CRuleConf*  cruleConfList;
   extern struct ServerConf* serverConfList;
   extern struct s_map*      GlobalServiceMapList;
@@ -83,6 +84,7 @@
   struct ConnectionClass *c_class;
   struct DenyConf *dconf;
   struct ExceptConf *econf;
+  struct ProxyConf *pconf;
   struct ServerConf *sconf;
   struct s_map *smap;
   struct Privs privs;
@@ -181,6 +183,8 @@ static void free_slist(struct SLink **link) {
 %token TOK_IPV4 TOK_IPV6
 %token DNS
 %token WEBIRC
+%token PROXY
+%token PROXYSSL
 %token STRIPSSLFP
 %token SSLFP
 %token SSLCIPHERS
@@ -213,7 +217,7 @@ blocks: blocks block | block;
 block: adminblock | generalblock | classblock | connectblock |
        uworldblock | operblock | portblock | jupeblock | clientblock |
        killblock | exceptblock | cruleblock | motdblock | featuresblock | quarantineblock |
-       pseudoblock | iauthblock | webircblock | error ';';
+       pseudoblock | iauthblock | webircblock | proxyblock | error ';';
 
 /* The timespec, sizespec and expr was ripped straight from
  * ircd-hybrid-7. */
@@ -778,14 +782,18 @@ portblock: PORT '{' portitems '}' ';' {
   port = 0;
 };
 portitems: portitem portitems | portitem;
-portitem: portnumber | portvhost | portvhostnumber | portmask | portserver | portwebirc | porthidden | portssl;
+portitem: portnumber | portvhost | portvhostnumber | portmask | portserver | portwebirc | portproxy | porthidden | portssl | portproxyssl;
 portnumber: PORT '=' address_family NUMBER ';'
 {
   if ($4 < 1 || $4 > 65535) {
     parse_error("Port %d is out of range", port);
-  } else if (FlagHas(&listen_flags, LISTEN_WEBIRC)
+  } else if ((FlagHas(&listen_flags, LISTEN_WEBIRC)
+               || FlagHas(&listen_flags, LISTEN_PROXY))
              && FlagHas(&listen_flags, LISTEN_SERVER)) {
-    parse_error("Port %d cannot be both WEBIRC and SERVER", port);
+    parse_error("Port %d cannot be both WEBIRC/PROXY and SERVER", port);
+  } else if (FlagHas(&listen_flags, LISTEN_WEBIRC)
+             && FlagHas(&listen_flags, LISTEN_PROXY)) {
+    parse_error("Port %d cannot be both WEBIRC and PROXY", port);
   } else {
     port = $3 | $4;
     if (hosts && (0 == (hosts->flags & 65535)))
@@ -847,6 +855,14 @@ portwebirc: WEBIRC '=' YES ';'
   FlagClr(&listen_flags, LISTEN_WEBIRC);
 };
 
+portproxy: PROXY '=' YES ';'
+{
+  FlagSet(&listen_flags, LISTEN_PROXY);
+} | PROXY '=' NO ';'
+{
+  FlagClr(&listen_flags, LISTEN_PROXY);
+};
+
 portssl: SSLTOK '=' YES ';'
 {
 #if defined(USE_SSL)
@@ -859,6 +875,14 @@ portssl: SSLTOK '=' YES ';'
 {
   FlagClr(&listen_flags, LISTEN_SSL);
 }
+
+portproxyssl: PROXYSSL '=' YES ';'
+{
+  FlagSet(&listen_flags, LISTEN_PROXYSSL);
+} | PROXYSSL '=' NO ';'
+{
+  FlagClr(&listen_flags, LISTEN_PROXYSSL);
+};
 
 clientblock: CLIENT
 {
@@ -1349,3 +1373,34 @@ webircip: IP '=' QSTRING ';' { MyFree(ip); ip = $3; };
 webircpass: PASS '=' QSTRING ';' { MyFree(pass); pass = $3; };
 webircdesc: DESCRIPTION '=' QSTRING ';' { MyFree(name); name = $3; };
 webirchidden: HIDDEN '=' YES ';' { flags = flags | 1; }
+
+proxyblock: PROXY '{' proxyitems '}' ';'
+proxyitems: proxyitem proxyitems | proxyitem;
+proxyitem: proxyip;
+proxyip: IP '=' QSTRING ';'
+{
+  struct irc_in_addr peer;
+  unsigned char bits;
+
+  if (!$3)
+    parse_error("Missing IP address in Proxy block");
+  else if (!ipmask_parse($3, &peer, &bits))
+    parse_error("Invalid IP address in Proxy block");
+  else {
+    /* Search for a pconf with the same IP (mask). */
+    for (pconf = proxyConfList; pconf; pconf = pconf->next) {
+      if ((bits == pconf->bits)
+          && ipmask_check(&peer, &pconf->ip, bits))
+        break;
+    }
+
+    /* Update it, or create a new structure. */
+    if (!pconf) {
+      pconf = (struct ProxyConf *) MyMalloc(sizeof(*pconf));
+      memcpy(&pconf->ip, &peer, sizeof(pconf->ip));
+      pconf->bits = bits;
+      pconf->next = proxyConfList;
+      proxyConfList = pconf;
+    }
+  }
+};

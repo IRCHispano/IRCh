@@ -633,6 +633,13 @@ struct Message msgtab[] = {
     { m_webirc, m_registered, m_ignore, m_registered, m_ignore }
   },
   {
+    MSG_PROXYI,
+    TOK_PROXYI,
+    0, MAXPARA, MFLG_SLOW, 0, NULL,
+    /* UNREG, CLIENT, SERVER, OPER, SERVICE */
+    { mr_proxy, m_registered, m_ignore, m_registered, m_ignore }
+  },
+  {
     MSG_XQUERY,
     TOK_XQUERY,
     0, MAXPARA, MFLG_SLOW, 0, NULL,
